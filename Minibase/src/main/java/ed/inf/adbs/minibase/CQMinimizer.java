@@ -1,13 +1,16 @@
 package ed.inf.adbs.minibase;
 
-import ed.inf.adbs.minibase.base.Atom;
-import ed.inf.adbs.minibase.base.Query;
-import ed.inf.adbs.minibase.base.RelationalAtom;
+import ed.inf.adbs.minibase.base.*;
 import ed.inf.adbs.minibase.parser.QueryParser;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  *
@@ -39,6 +42,16 @@ public class CQMinimizer {
      */
     public static void cqMinimizerPipe(String inputFile, String outputFile) {
         // parse query string
+        Query query = readCq(inputFile);
+
+        // get minimized query
+        Query minimizedQuery = minimizeCq(query);
+
+        // write minimized query to outputFile
+        writeCq(minimizedQuery, outputFile);
+    }
+
+    private static Query readCq(String inputFile) {
         Query query = null;
         try {
             query = QueryParser.parse(Paths.get(inputFile));
@@ -48,12 +61,21 @@ public class CQMinimizer {
             System.err.println("Exception occurred during parsing");
             e.printStackTrace();
         }
+        return query;
+    }
 
-        // get minimized query
-        Query minimizedQuery = minimizeCq(query);
-
-        // write minimized query to outputFile
-
+    private static void writeCq(Query query, String outputFile) {
+        try{
+            File file = new File(outputFile);
+            if (file.getParentFile() != null) {
+                file.getParentFile().mkdirs();
+            }
+            FileWriter fw = new FileWriter(file.getAbsoluteFile());
+            fw.write(query.toString());
+            fw.close();
+        } catch(IOException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -63,32 +85,125 @@ public class CQMinimizer {
      * but could potentially have constants in its relational atoms.
      *
      */
-    public static Query minimizeCq(Query query) {
+    private static Query minimizeCq(Query query) {
         RelationalAtom head = query.getHead();
         List<Atom> body = query.getBody();
 
         boolean isRemoved = true;
         while (isRemoved) {
             isRemoved = false;
-            System.out.println("Body: " + body);
             for (int i = 0; i < body.size(); i++) {
-                boolean canRemove = checkRemove(body, i);
+                boolean canRemove = checkRemove(body, i, head);
                 if (canRemove) {
+                    System.out.println("Remove Atom : " + body + " at Position " + i);
                     body.remove(i);
                     isRemoved = true;
                     break;
                 }
             }
         }
-
+        System.out.println("Body: " + body);
         return query;
     }
 
-    private static boolean checkRemove(List<Atom> body, int i) {
-        Atom aToRemove = body.get(i);
-        // Find another atom from the atom to remove to transform
-        // build a partial homomorphism
-        // check the partial homomorphism - 1. no output variable should be mapped 2. the mapping result of other atoms
+    private static boolean checkRemove(List<Atom> body, int atomPos, RelationalAtom head) {
+        RelationalAtom aToRemove = (RelationalAtom) body.get(atomPos);
+
+        // find another atom for the atom to remove to transform
+        for (int i = 0; i < body.size(); i++) {
+            if (i == atomPos) continue;
+            RelationalAtom aForTransform = (RelationalAtom) body.get(i);
+            // term-level checks
+            if (!checkTermLevelHomo(aToRemove, aForTransform, head)) continue;;
+            // build partial homomorphism mapping
+            HashMap<String, String> homoMapping = buildPartialHomo(aToRemove, aForTransform);
+            if (homoMapping == null) continue;
+            // check the partial homomorphism with all atoms
+            boolean isHomoValid = checkPartialHomo(body, homoMapping, atomPos);
+            if (isHomoValid) return true;
+        }
+
+        return false;
+    }
+
+
+    /**
+     * Check whether a source relational atom can transform to a dst relational atom with a homo mapping.
+     *
+     * names of two relational atoms should be consistent;
+     * for terms, variable to constant, variable to variable, constant x to constant x is allowed
+     * no constant to variable or constant x to constant y or map distinguish variable to other is allowed
+     *
+     */
+    private static boolean checkTermLevelHomo(RelationalAtom src, RelationalAtom dst, RelationalAtom head) {
+        // name mismatch
+        if (!src.getName().equals(dst.getName())) return false;
+
+        List<String> headTermStrList = head.getTerms().stream().map(Object::toString).collect(Collectors.toList());
+        List<Term> srcTerms = src.getTerms();
+        List<Term> dstTerms = dst.getTerms();
+
+        // term number mismatch
+        if (srcTerms.size() != dstTerms.size()) return false;
+
+        // check each term
+        for (int i = 0; i < srcTerms.size(); i++) {
+            Term srcTerm = srcTerms.get(i);
+            Term dstTerm = dstTerms.get(i);
+            boolean isSameTerm = srcTerm.toString().equals(dstTerm.toString());
+            if (srcTerm instanceof Constant) {
+                // constant to variable
+                if (dstTerm instanceof Variable) return false;
+                // constant x to constant y
+                if (!isSameTerm) return false;
+            } else {
+                // distinguish variable to other
+                if (headTermStrList.contains(srcTerm.toString()) && !isSameTerm) {
+                    return false;
+                }
+            }
+
+        }
+
+        // pass all checks
+        return true;
+    }
+
+    private static HashMap<String, String> buildPartialHomo(RelationalAtom src, RelationalAtom dst) {
+        List<Term> srcTerms = src.getTerms();
+        List<Term> dstTerms = dst.getTerms();
+
+        HashMap<String, String> homoMapping = new HashMap<>();
+        int i;
+        for (i = 0; i < srcTerms.size(); i++) {
+            String key = srcTerms.get(i).toString();
+            String value = dstTerms.get(i).toString();
+            if (homoMapping.containsKey(key)) {
+                // no one-to-many mapping
+                if (!homoMapping.get(key).equals(value)) return null;
+            } else {
+                homoMapping.put(key, value);
+            }
+        }
+        return homoMapping;
+    }
+
+    private static boolean checkPartialHomo(List<Atom> body, HashMap<String, String> homoMapping, int removedAtomPos) {
+        List<String> atomStrList = body.stream().map(Object::toString).collect(Collectors.toList());
+        atomStrList.remove(removedAtomPos);
+        for (int i = 0; i < body.size(); i++) {
+            if (i == removedAtomPos) continue;
+            RelationalAtom atom = (RelationalAtom) body.get(i);
+            List<String> termStrList = atom.getTerms().stream().map(Object::toString).collect(Collectors.toList());
+            String atomStrMapped = atom.toString();
+            for (String termStr: termStrList) {
+                if (homoMapping.containsKey(termStr)) {
+                    // apply mapping
+                    atomStrMapped = atomStrMapped.replace(termStr, homoMapping.get(termStr));
+                }
+            }
+            if (!atomStrList.contains(atomStrMapped)) return false;
+        }
         return true;
     }
 
