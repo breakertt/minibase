@@ -37,7 +37,7 @@ public class CQMinimizer {
     /**
      * Pipeline for CQMinimizer
      *
-     * Parse input, minimize query, then output minimized query
+     * Parse input, minimize query, then write minimized query to output
      *
      */
     public static void cqMinimizerPipe(String inputFile, String outputFile) {
@@ -84,6 +84,8 @@ public class CQMinimizer {
      * Assume the body of the query from inputFile has no comparison atoms
      * but could potentially have constants in its relational atoms.
      *
+     * Iteratively find atom to remove
+     *
      */
     private static Query minimizeCq(Query query) {
         RelationalAtom head = query.getHead();
@@ -106,6 +108,14 @@ public class CQMinimizer {
         return query;
     }
 
+    /**
+     * Check whether an atom can be remove by finding another atom to transform to
+     *
+     * Firstly, find another atom and perform basic checks (name, length, constant -> variable)
+     * Secondly, build a partial homo mapping between atom to remove and atom for transform
+     * Thirdly, check the homo mapping on atoms except the one to remove
+     *
+     */
     private static boolean checkRemove(List<Atom> body, int atomPos, RelationalAtom head) {
         RelationalAtom aToRemove = (RelationalAtom) body.get(atomPos);
 
@@ -117,7 +127,7 @@ public class CQMinimizer {
             if (!checkTermLevelHomo(aToRemove, aForTransform, head)) continue;;
             // build partial homomorphism mapping
             HashMap<String, String> homoMapping = buildPartialHomo(aToRemove, aForTransform);
-            if (homoMapping == null) continue;
+            if (homoMapping == null) continue; // build homo failed due to one-to-many mapping
             // check the partial homomorphism with all atoms
             boolean isHomoValid = checkPartialHomo(body, homoMapping, atomPos);
             if (isHomoValid) return true;
@@ -134,6 +144,10 @@ public class CQMinimizer {
      * for terms, variable to constant, variable to variable, constant x to constant x is allowed
      * no constant to variable or constant x to constant y or map distinguish variable to other is allowed
      *
+     * @param src an atom to be transform
+     * @param dst an atom for src to transform to
+     * @param head head atom of the cq containing distinguish variables
+     * @return a boolean indicating whether the basic homo can be built between src and dst
      */
     private static boolean checkTermLevelHomo(RelationalAtom src, RelationalAtom dst, RelationalAtom head) {
         // name mismatch
@@ -169,6 +183,15 @@ public class CQMinimizer {
         return true;
     }
 
+    /**
+     * build a key-value pair for homo mapping between src and dst
+     *
+     * if the mapping can not be constructed (i.e. one-to-many mapping), null will be returned
+     *
+     * @param src an atom to be transform
+     * @param dst an atom for src to transform to
+     * @return a key-value pair, key is the original term, value is the term after mapping
+     */
     private static HashMap<String, String> buildPartialHomo(RelationalAtom src, RelationalAtom dst) {
         List<Term> srcTerms = src.getTerms();
         List<Term> dstTerms = dst.getTerms();
@@ -188,20 +211,29 @@ public class CQMinimizer {
         return homoMapping;
     }
 
+    /**
+     * Check whether atoms except the one to remove, still exist in the CQ body after mapping
+     *
+     * @param body main body of cq
+     * @param homoMapping key-value pair for homo mapping
+     * @param removedAtomPos the position of the atom to remove
+     * @return a boolean showing the homo is valid
+     */
     private static boolean checkPartialHomo(List<Atom> body, HashMap<String, String> homoMapping, int removedAtomPos) {
         List<String> atomStrList = body.stream().map(Object::toString).collect(Collectors.toList());
-        atomStrList.remove(removedAtomPos);
+        atomStrList.remove(removedAtomPos); // can not equal to the atom to remove
         for (int i = 0; i < body.size(); i++) {
-            if (i == removedAtomPos) continue;
+            if (i == removedAtomPos) continue; // skip the atom to remove
             RelationalAtom atom = (RelationalAtom) body.get(i);
             List<String> termStrList = atom.getTerms().stream().map(Object::toString).collect(Collectors.toList());
             String atomStrMapped = atom.toString();
+            // apply mapping
             for (String termStr: termStrList) {
                 if (homoMapping.containsKey(termStr)) {
-                    // apply mapping
                     atomStrMapped = atomStrMapped.replace(termStr, homoMapping.get(termStr));
                 }
             }
+            // if the atom is not exists the CQ body, homo mapping is invalid
             if (!atomStrList.contains(atomStrMapped)) return false;
         }
         return true;
