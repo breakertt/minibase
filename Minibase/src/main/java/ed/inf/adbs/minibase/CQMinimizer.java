@@ -5,6 +5,7 @@ import ed.inf.adbs.minibase.base.Query;
 import ed.inf.adbs.minibase.base.RelationalAtom;
 import ed.inf.adbs.minibase.parser.QueryParser;
 
+import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.List;
 
@@ -25,9 +26,34 @@ public class CQMinimizer {
         String inputFile = args[0];
         String outputFile = args[1];
 
-//        minimizeCQ(inputFile, outputFile);
+        cqMinimizerPipe(inputFile, outputFile);
 
-        parsingExample(inputFile);
+//        parsingExample(inputFile);
+    }
+
+    /**
+     * Pipeline for CQMinimizer
+     *
+     * Parse input, minimize query, then output minimized query
+     *
+     */
+    public static void cqMinimizerPipe(String inputFile, String outputFile) {
+        // parse query string
+        Query query = null;
+        try {
+            query = QueryParser.parse(Paths.get(inputFile));
+        }
+        catch (IOException e)
+        {
+            System.err.println("Exception occurred during parsing");
+            e.printStackTrace();
+        }
+
+        // get minimized query
+        Query minimizedQuery = minimizeCq(query);
+
+        // write minimized query to outputFile
+
     }
 
     /**
@@ -37,8 +63,33 @@ public class CQMinimizer {
      * but could potentially have constants in its relational atoms.
      *
      */
-    public static void minimizeCQ(String inputFile, String outputFile) {
-        // TODO: add your implementation
+    public static Query minimizeCq(Query query) {
+        RelationalAtom head = query.getHead();
+        List<Atom> body = query.getBody();
+
+        boolean isChanged = true;
+        while (isChanged) {
+            isChanged = false;
+            System.out.println("Body: " + body);
+            for (int i = 0; i < body.size(); i++) {
+                boolean canRemove = checkRemove(body, i);
+                if (canRemove) {
+                    body.remove(i);
+                    isChanged = true;
+                    break;
+                }
+            }
+        }
+
+        return query;
+    }
+
+    private static boolean checkRemove(List<Atom> body, int i) {
+        Atom aToRemove = body.get(i);
+        // Find another atom from the atom to remove to transform
+        // build a partial homomorphism
+        // check the partial homomorphism - 1. no output variable should be mapped 2. the mapping result of other atoms
+        return true;
     }
 
     /**
