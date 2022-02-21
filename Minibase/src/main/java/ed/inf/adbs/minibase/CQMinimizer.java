@@ -67,15 +67,15 @@ public class CQMinimizer {
         RelationalAtom head = query.getHead();
         List<Atom> body = query.getBody();
 
-        boolean isChanged = true;
-        while (isChanged) {
-            isChanged = false;
+        boolean isRemoved = true;
+        while (isRemoved) {
+            isRemoved = false;
             System.out.println("Body: " + body);
             for (int i = 0; i < body.size(); i++) {
                 boolean canRemove = checkRemove(body, i);
                 if (canRemove) {
                     body.remove(i);
-                    isChanged = true;
+                    isRemoved = true;
                     break;
                 }
             }
