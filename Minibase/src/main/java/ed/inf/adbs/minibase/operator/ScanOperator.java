@@ -35,7 +35,11 @@ public class ScanOperator extends Operator {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return new Tuple(tupleStr, tableName);
+        if (tupleStr != null) {
+            return new Tuple(tupleStr, tableName);
+        } else {
+            return null;
+        }
     }
 
     @Override
