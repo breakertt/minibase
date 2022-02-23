@@ -46,7 +46,7 @@ public enum Catalog {
             Table oldTable = catalog.get(name);
             return oldTable.equals(newTable);
         } else {
-            catalog.put(name, newTable);
+                catalog.put(name, newTable);
             return true;
         }
     }
@@ -67,7 +67,7 @@ public enum Catalog {
         }
     }
 
-    private class Table {
+    private static class Table {
         private final String name;
         private final String path;
         private final String schema;

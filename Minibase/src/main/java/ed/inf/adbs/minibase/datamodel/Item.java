@@ -1,43 +1,35 @@
 package ed.inf.adbs.minibase.datamodel;
 
-class Item {
+import ed.inf.adbs.minibase.base.Constant;
+import ed.inf.adbs.minibase.base.IntegerConstant;
+import ed.inf.adbs.minibase.base.StringConstant;
+
+public abstract class Item {
     public static Item itemBuilder(String content, String type) {
         if (type.equals("int")) {
-            return new ItemInt(content);
+            return new ItemInteger(content);
         } else if (type.equals("string")) {
             return new ItemString(content);
         } else {
             return null;
         }
     }
-}
 
-class ItemInt extends Item {
-    public final int i;
-
-    ItemInt(String s) {
-        this.i = Integer.parseInt(s);
+    public static Item itemBuilder(Constant constant) {
+        if (constant instanceof IntegerConstant) {
+            return new ItemInteger(((IntegerConstant) constant).getValue());
+        } else if (constant instanceof StringConstant) {
+            return new ItemString(((StringConstant) constant).getValue());
+        } else {
+            return null;
+        }
     }
 
-    ItemInt(int i) {
-        this.i = i;
-    }
-
-    @Override
-    public String toString() {
-        return String.valueOf(i);
-    }
-}
-
-class ItemString extends Item {
-    public final String s;
-
-    ItemString(String s) {
-        this.s = s;
-    }
-
-    @Override
-    public String toString() {
-        return s;
+    public static int compareBetween(Item item1, Item item2) {
+        if (item1 instanceof ItemInteger) {
+            return ((ItemInteger) item1).getValue().compareTo(((ItemInteger) item2).getValue());
+        } else {
+            return ((ItemString) item1).getValue().compareTo(((ItemString) item2).getValue());
+        }
     }
 }

@@ -5,7 +5,6 @@ import ed.inf.adbs.minibase.datamodel.Catalog;
 import ed.inf.adbs.minibase.datamodel.Tuple;
 
 import java.io.*;
-import java.util.ArrayList;
 
 public class ScanOperator extends Operator {
     private final String tableName;
@@ -13,7 +12,6 @@ public class ScanOperator extends Operator {
     private BufferedReader tableBufReader;
 
     public ScanOperator(String tableName) {
-        super(new ArrayList<>()); // no child
         this.tableName = tableName;
         try {
             String tablePath = Catalog.INSTANCE.queryTablePath(tableName);

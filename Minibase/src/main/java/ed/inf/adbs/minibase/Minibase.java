@@ -25,13 +25,13 @@ public class Minibase {
         String inputFile = args[1];
         String outputFile = args[2];
 
-//        evaluateCQ(databaseDir, inputFile, outputFile);
+        evaluateCQ(databaseDir, inputFile, outputFile);
 
-        parsingExample(inputFile);
+//        parsingExample(inputFile);
     }
 
     public static void evaluateCQ(String databaseDir, String inputFile, String outputFile) {
-        // TODO: add your implementation
+
     }
 
     /**
