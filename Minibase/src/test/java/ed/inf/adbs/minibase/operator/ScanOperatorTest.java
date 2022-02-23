@@ -10,11 +10,11 @@ public class ScanOperatorTest {
 
     @Test
     public void scanOpTest() {
-        Catalog.INSTANCE.addTable(
-                "R",
-                "data/evaluation/db/files/R.csv",
-                "R int int string"
-        );
+        try {
+            Catalog.INSTANCE.loadCatalog("data/evaluation/db");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         ScanOperator scanOperator = new ScanOperator("R");
         System.out.println(scanOperator.getNextTuple());
         System.out.println();

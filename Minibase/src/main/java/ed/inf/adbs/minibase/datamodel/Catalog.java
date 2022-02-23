@@ -1,37 +1,67 @@
 package ed.inf.adbs.minibase.datamodel;
 
+import java.io.*;
 import java.util.HashMap;
+import java.util.Objects;
 
 // Singleton
 public enum Catalog {
     INSTANCE;
 
-    private final HashMap<String, Table> tableMetadata = new HashMap<>();
+    private final HashMap<String, Table> catalog = new HashMap<>();
 
-    public boolean addTable(String name, String path, String schema) {
-        Table newTable = new Table(name, path, schema);
-        if (tableMetadata.containsKey(name)) {
-            Table oldTable = tableMetadata.get(name);
-            if (!oldTable.getName().equals(name)) return false;
-            if (!oldTable.getPath().equals(path)) return false;
-            if (!oldTable.getSchema().equals(schema)) return false;
-        } else {
-            tableMetadata.put(name, newTable);
+    public void loadCatalog(String databaseDir) throws Exception {
+        File dbDirFile = new File(databaseDir);
+        File schemaFile = new File(dbDirFile, "schema.txt");
+        File tableSubDirFile = new File(dbDirFile, "files");
+        BufferedReader schemaBufReader;
+
+        if (!schemaFile.exists() || !schemaFile.isFile()) {
+            throw new Exception("schema not exist or not a file");
         }
-        return true;
+
+        schemaBufReader = new BufferedReader(new FileReader(schemaFile));
+        String tableSchema;
+        while ((tableSchema = schemaBufReader.readLine()) != null) {
+            loadTable(tableSchema, tableSubDirFile);
+        }
+    }
+
+    private void loadTable(String tableSchema, File tableSubDirFile) throws Exception {
+        String[] tableSchemaList = tableSchema.split(" ");
+        File tableFile = new File(tableSubDirFile, tableSchemaList[0] + ".csv");
+
+        if (!tableFile.exists() || !tableFile.isFile()) {
+            throw new Exception("table not exist or not a file");
+        }
+
+        if (!addTable(tableSchemaList[0], tableFile.getPath(), tableSchema)) {
+            throw new Exception("duplicate table name with different schema");
+        }
+    }
+
+    private boolean addTable(String name, String path, String schema) {
+        Table newTable = new Table(name, path, schema);
+        if (catalog.containsKey(name)) {
+            Table oldTable = catalog.get(name);
+            return oldTable.equals(newTable);
+        } else {
+            catalog.put(name, newTable);
+            return true;
+        }
     }
 
     public String queryTablePath(String name) {
-        if (tableMetadata.containsKey(name)) {
-            return tableMetadata.get(name).getPath();
+        if (catalog.containsKey(name)) {
+            return catalog.get(name).getPath();
         } else {
             return null;
         }
     }
 
     public String queryTableSchema(String name) {
-        if (tableMetadata.containsKey(name)) {
-            return tableMetadata.get(name).getSchema();
+        if (catalog.containsKey(name)) {
+            return catalog.get(name).getSchema();
         } else {
             return null;
         }
@@ -58,6 +88,19 @@ public enum Catalog {
 
         public String getSchema() {
             return schema;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Table table = (Table) o;
+            return Objects.equals(name, table.name) && Objects.equals(path, table.path) && Objects.equals(schema, table.schema);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(name, path, schema);
         }
     }
 }
