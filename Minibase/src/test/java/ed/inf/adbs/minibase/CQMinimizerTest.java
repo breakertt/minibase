@@ -2,7 +2,7 @@ package ed.inf.adbs.minibase;
 
 import ed.inf.adbs.minibase.base.Query;
 import ed.inf.adbs.minibase.parser.QueryParser;
-import org.junit.Assert;
+import static org.junit.Assert.assertEquals;
 import org.junit.Test;
 
 import java.io.File;
@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 public class CQMinimizerTest {
 
     @Test
-    public void queries() throws IOException {
+    public void minimizerTest() throws IOException {
         String basePath = "data/minimization/";
         String input = "input/";
         String expectedFolder = "expected_output/";
@@ -36,7 +36,7 @@ public class CQMinimizerTest {
             Query expectedQuery = QueryParser.parse(Paths.get(expectedFile.getPath()));
             Query calculatedQuery = QueryParser.parse(Paths.get(calculatedFile.getPath()));
 
-            Assert.assertEquals(expectedQuery.getHead().toString(), calculatedQuery.getHead().toString());
+            assertEquals(expectedQuery.getHead().toString(), calculatedQuery.getHead().toString());
             List<String> expectedQueryBodyStrList = expectedQuery.getBody().
                     stream().map(Object::toString).collect(Collectors.toList());
             List<String> calculatedQueryBodyStrList = calculatedQuery.getBody().
@@ -44,7 +44,7 @@ public class CQMinimizerTest {
             Collections.sort(expectedQueryBodyStrList);
             Collections.sort(calculatedQueryBodyStrList);
 
-            Assert.assertEquals(expectedQueryBodyStrList, calculatedQueryBodyStrList);
+            assertEquals(expectedQueryBodyStrList, calculatedQueryBodyStrList);
         }
     }
 }
