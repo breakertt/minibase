@@ -1,12 +1,14 @@
 package ed.inf.adbs.minibase.operator;
 
+import ed.inf.adbs.minibase.datamodel.Tuple;
+
 import java.io.PrintStream;
 import java.util.List;
 
 public abstract class Operator {
     protected List<Operator> children = null;
 
-    abstract public String getNextTuple();
+    abstract public Tuple getNextTuple();
     abstract public void reset();
 
     public Operator(List<Operator> children) {
@@ -18,7 +20,7 @@ public abstract class Operator {
     }
 
     public void dump(PrintStream ps) {
-        String tuple = null;
+        Tuple tuple = null;
         while(true) {
             tuple = getNextTuple();
             if (tuple != null) {

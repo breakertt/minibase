@@ -2,20 +2,23 @@ package ed.inf.adbs.minibase.operator;
 
 
 import ed.inf.adbs.minibase.datamodel.Catalog;
+import ed.inf.adbs.minibase.datamodel.Tuple;
 
 import java.io.*;
 import java.util.ArrayList;
 
 public class ScanOperator extends Operator {
+    private final String tableName;
     private FileInputStream tableFileInputStream;
     private BufferedReader tableBufReader;
 
     public ScanOperator(String tableName) {
         super(new ArrayList<>()); // no child
+        this.tableName = tableName;
         try {
             String tablePath = Catalog.INSTANCE.queryTablePath(tableName);
             if (tablePath == null) {
-                throw new Exception("invalid table path");
+                throw new Exception("Table not found in Catalog");
             }
             tableFileInputStream = new FileInputStream(tablePath);
             tableBufReader = new BufferedReader(new InputStreamReader(tableFileInputStream));
@@ -25,16 +28,15 @@ public class ScanOperator extends Operator {
     }
 
     @Override
-    public String getNextTuple() {
-        String line = null;
+    public Tuple getNextTuple() {
+        String tupleStr = null;
         try {
-            line = tableBufReader.readLine();
+            tupleStr = tableBufReader.readLine();
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return line;
+        return new Tuple(tupleStr, tableName);
     }
-
 
     @Override
     public void reset() {
