@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -128,14 +129,43 @@ public class CQMinimizer {
             // term-level checks
             if (!checkTermLevelHomo(aToRemove, aForTransform, head)) continue;
             // build partial homomorphism mapping
-            HashMap<String, String> homoMapping = buildPartialHomo(aToRemove, aForTransform);
+            HashMap<String, Term> homoMapping = buildPartialHomo(aToRemove, aForTransform);
             if (homoMapping == null) continue; // build homo failed due to one-to-many mapping
-            // check the partial homomorphism with all atoms
-            boolean isHomoValid = checkPartialHomo(body, homoMapping, atomPos);
-            if (isHomoValid) return true;
+            // create a new body
+            List<Atom> bodyDeletedOne = new ArrayList<>();
+            bodyDeletedOne.addAll(body);
+            bodyDeletedOne.remove(atomPos);
+            // apply mapping to all atoms
+            List<Atom> bodyDeletedMappedList = mapAtoms(homoMapping, bodyDeletedOne);
+            // homo check - two check methods
+            // method 1 - trivial check, all atoms are in the body after mapping
+            List<String> bodyDeletedStrList = bodyDeletedOne.stream().map(Object::toString).collect(Collectors.toList());
+            List<Integer> mismatchList = new ArrayList<>();
+            for (int j = 0; j < bodyDeletedMappedList.size(); j++) {
+                if (!bodyDeletedStrList.contains(bodyDeletedMappedList.get(j).toString())) {
+                    mismatchList.add(j);
+                }
+            }
+            if (mismatchList.size() == 0) return true;
+            // method 2 - complex check, find a homo back to original body
         }
 
         return false;
+    }
+
+    private static List<Atom> mapAtoms(HashMap<String, Term> homoMapping, List<Atom> bodyDeletedOne) {
+        List<Atom> bodyDeletedMappedList = new ArrayList<>();
+        for (int j = 0; j < bodyDeletedOne.size(); j++) {
+            RelationalAtom oldAtom = (RelationalAtom) bodyDeletedOne.get(j);
+            List<Term> oldTermList = oldAtom.getTerms();
+            List<Term> newTermList = new ArrayList<>();
+            for (Term oldTerm: oldTermList) {
+                newTermList.add(homoMapping.getOrDefault(oldTerm.toString(), oldTerm));
+            }
+            RelationalAtom newAtom = new RelationalAtom(oldAtom.getName(), newTermList);
+            bodyDeletedMappedList.add(newAtom);
+        }
+        return bodyDeletedMappedList;
     }
 
 
@@ -194,20 +224,20 @@ public class CQMinimizer {
      * @param dst an atom for src to transform to
      * @return a key-value pair, key is the original term, value is the term after mapping
      */
-    private static HashMap<String, String> buildPartialHomo(RelationalAtom src, RelationalAtom dst) {
+    private static HashMap<String, Term> buildPartialHomo(RelationalAtom src, RelationalAtom dst) {
         List<Term> srcTerms = src.getTerms();
         List<Term> dstTerms = dst.getTerms();
 
-        HashMap<String, String> homoMapping = new HashMap<>();
+        HashMap<String, Term> homoMapping = new HashMap<>();
         int i;
         for (i = 0; i < srcTerms.size(); i++) {
             String key = srcTerms.get(i).toString();
-            String value = dstTerms.get(i).toString();
+            String valueStr = dstTerms.get(i).toString();
             if (homoMapping.containsKey(key)) {
                 // no one-to-many mapping
-                if (!homoMapping.get(key).equals(value)) return null;
+                if (!homoMapping.get(key).toString().equals(valueStr)) return null;
             } else {
-                homoMapping.put(key, value);
+                homoMapping.put(key, dstTerms.get(i));
             }
         }
         return homoMapping;
@@ -216,16 +246,13 @@ public class CQMinimizer {
     /**
      * Check whether atoms except the one to remove, still exist in the CQ body after mapping
      *
-     * @param body main body of cq
+     * @param body main body of cq with one atom removed
      * @param homoMapping key-value pair for homo mapping
-     * @param removedAtomPos the position of the atom to remove
      * @return a boolean showing the homo is valid
      */
-    private static boolean checkPartialHomo(List<Atom> body, HashMap<String, String> homoMapping, int removedAtomPos) {
+    private static boolean checkPartialHomoSubset(List<Atom> body, HashMap<String, String> homoMapping) {
         List<String> atomStrList = body.stream().map(Object::toString).collect(Collectors.toList());
-        atomStrList.remove(removedAtomPos); // can not equal to the atom to remove
         for (int i = 0; i < body.size(); i++) {
-            if (i == removedAtomPos) continue; // skip the atom to remove
             RelationalAtom atom = (RelationalAtom) body.get(i);
             List<String> termStrList = atom.getTermStrList();
             String atomStrMapped = atom.toString();
