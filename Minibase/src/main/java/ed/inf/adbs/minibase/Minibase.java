@@ -4,7 +4,9 @@ import ed.inf.adbs.minibase.base.Atom;
 import ed.inf.adbs.minibase.base.Query;
 import ed.inf.adbs.minibase.base.RelationalAtom;
 import ed.inf.adbs.minibase.parser.QueryParser;
+import jdk.internal.org.objectweb.asm.tree.analysis.Interpreter;
 
+import java.io.*;
 import java.nio.file.Paths;
 import java.util.List;
 
@@ -31,7 +33,14 @@ public class Minibase {
     }
 
     public static void evaluateCQ(String databaseDir, String inputFile, String outputFile) {
-
+        try {
+            ed.inf.adbs.minibase.Interpreter interpreter = new ed.inf.adbs.minibase.Interpreter(databaseDir, inputFile);
+            PrintStream filePrintStream = new PrintStream(new FileOutputStream(outputFile));
+            interpreter.dump(filePrintStream);
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
     }
 
     /**
