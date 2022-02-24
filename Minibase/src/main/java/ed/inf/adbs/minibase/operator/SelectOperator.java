@@ -25,7 +25,7 @@ public class SelectOperator extends Operator {
         for (ComparisonAtom cAtom: cAtomList) {
             Comparable comparable1 = convertTermToComparable(cAtom.getTerm1(), tuple);
             Comparable comparable2 = convertTermToComparable(cAtom.getTerm2(), tuple);
-            if (!CompareCheck(comparable1.compareTo(comparable2), cAtom.getOp())) return false;
+            if (!compareCheck(comparable1.compareTo(comparable2), cAtom.getOp())) return false;
         }
         return true;
     }
@@ -54,7 +54,22 @@ public class SelectOperator extends Operator {
         }
     }
 
-    private boolean CompareCheck(int comparedToRes, ComparisonOperator op) {
+    private boolean implicitRulesCheck(Tuple tuple) {
+        for (int i = 0; i < rAtomBody.size(); i++) {
+            Term term = rAtomBody.get(i);
+            if (term instanceof Constant) {
+                Item item = Item.itemBuilder((Constant) term);
+                Comparable comparable1 = item.getValue();
+                Comparable comparable2 = tuple.getItems().get(i).getValue();
+                if (compareCheck(comparable1.compareTo(comparable2), ComparisonOperator.EQ)) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    private boolean compareCheck(int comparedToRes, ComparisonOperator op) {
         switch (op) {
             case EQ:
                 return comparedToRes == 0;
@@ -71,21 +86,6 @@ public class SelectOperator extends Operator {
             default:
                 return false;
         }
-    }
-
-    private boolean implicitRulesCheck(Tuple tuple) {
-        for (int i = 0; i < rAtomBody.size(); i++) {
-            Term term = rAtomBody.get(i);
-            if (term instanceof Constant) {
-                Item item = Item.itemBuilder((Constant) term);
-                Comparable comparable1 = item.getValue();
-                Comparable comparable2 = tuple.getItems().get(i).getValue();
-                if (comparable1.compareTo(comparable2) != 0) {
-                    return false;
-                }
-            }
-        }
-        return true;
     }
 
     @Override

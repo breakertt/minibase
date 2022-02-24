@@ -42,4 +42,18 @@ public class SelectOperatorTest {
         SelectOperator selectOp = new SelectOperator("R", (RelationalAtom) query.getBody().get(0), comparisonAtoms);
         selectOp.dump(System.out);
     }
+
+    @Test
+    public void selectOpTestQuery11() throws IOException {
+        try {
+            Catalog.INSTANCE.loadCatalog("data/evaluation/db");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        Query query = QueryParser.parse(Paths.get("data/evaluation/input/query11.txt"));
+        ArrayList<ComparisonAtom> comparisonAtoms = new ArrayList<>();
+        comparisonAtoms.add((ComparisonAtom) query.getBody().get(1));
+        SelectOperator selectOp = new SelectOperator("R", (RelationalAtom) query.getBody().get(0), comparisonAtoms);
+        selectOp.dump(System.out);
+    }
 }
