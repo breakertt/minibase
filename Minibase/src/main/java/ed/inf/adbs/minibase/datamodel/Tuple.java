@@ -3,20 +3,25 @@ package ed.inf.adbs.minibase.datamodel;
 import ed.inf.adbs.minibase.Utils;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
 public class Tuple {
-    private final String rawStr;
     private final String tableName;
     private final ArrayList<Item> items;
 
     public Tuple(String tupleStr, String tableName) {
-        this.rawStr = tupleStr;
         this.tableName = tableName;
-        this.items = parseTupleStr();
+        this.items = parseTupleStr(tupleStr);
     }
 
-    private ArrayList<Item> parseTupleStr() {
-        String[] itemContentStrList = rawStr.split(", ");
+    public Tuple(Tuple oldTuple, Integer[] reorderList) {
+        this.tableName = oldTuple.tableName;
+        this.items = reorderTupleItems(oldTuple.getItems(), reorderList);
+    }
+
+    private ArrayList<Item> parseTupleStr(String tupleStr) {
+        String[] itemContentStrList = tupleStr.split(", ");
         String[] itemSchemaStrList = null;
         try {
             String tableSchema = Catalog.INSTANCE.queryTableSchema(tableName);
@@ -40,8 +45,12 @@ public class Tuple {
         return items;
     }
 
-    public String getRawStr() {
-        return rawStr;
+    private ArrayList<Item> reorderTupleItems(ArrayList<Item> oldItems, Integer[] reorderList) {
+        ArrayList<Item> items = new ArrayList<>();
+        for (Integer oldItemPos: reorderList) {
+            items.add(oldItems.get(oldItemPos));
+        }
+        return items;
     }
 
     public String getTableName() {
@@ -52,10 +61,9 @@ public class Tuple {
         return items;
     }
 
-
     @Override
     public java.lang.String toString() {
-//        return str;
+//        return rawStr;
         return Utils.join(items, ", ");
     }
 

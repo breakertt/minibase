@@ -26,7 +26,7 @@ public class SelectOperatorTest {
         Query query = QueryParser.parse(Paths.get("data/evaluation/input/query2.txt"));
         ArrayList<ComparisonAtom> comparisonAtoms = new ArrayList<>();
         comparisonAtoms.add((ComparisonAtom) query.getBody().get(1));
-        SelectOperator selectOp = new SelectOperator("R", (RelationalAtom) query.getBody().get(0), comparisonAtoms);
+        SelectOperator selectOp = new SelectOperator(new ScanOperator("R"), (RelationalAtom) query.getBody().get(0), comparisonAtoms);
         selectOp.dump(System.out);
     }
 
@@ -39,7 +39,7 @@ public class SelectOperatorTest {
         }
         Query query = QueryParser.parse(Paths.get("data/evaluation/input/query10.txt"));
         ArrayList<ComparisonAtom> comparisonAtoms = new ArrayList<>();
-        SelectOperator selectOp = new SelectOperator("R", (RelationalAtom) query.getBody().get(0), comparisonAtoms);
+        SelectOperator selectOp = new SelectOperator(new ScanOperator("R"), (RelationalAtom) query.getBody().get(0), comparisonAtoms);
         selectOp.dump(System.out);
     }
 
@@ -53,7 +53,7 @@ public class SelectOperatorTest {
         Query query = QueryParser.parse(Paths.get("data/evaluation/input/query11.txt"));
         ArrayList<ComparisonAtom> comparisonAtoms = new ArrayList<>();
         comparisonAtoms.add((ComparisonAtom) query.getBody().get(1));
-        SelectOperator selectOp = new SelectOperator("R", (RelationalAtom) query.getBody().get(0), comparisonAtoms);
+        SelectOperator selectOp = new SelectOperator(new ScanOperator("R"), (RelationalAtom) query.getBody().get(0), comparisonAtoms);
         selectOp.dump(System.out);
     }
 }

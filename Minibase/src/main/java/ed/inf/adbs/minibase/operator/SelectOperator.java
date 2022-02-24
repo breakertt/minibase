@@ -16,8 +16,8 @@ public class SelectOperator extends Operator {
     private HashMap<String, Integer> variablePosMap;
     private List<Integer> constantTermPosList;
 
-    public SelectOperator(String tableName, RelationalAtom rAtom, List<ComparisonAtom> cAtomList) {
-        childScanOp = new ScanOperator(tableName); // one scan child
+    public SelectOperator(ScanOperator child, RelationalAtom rAtom, List<ComparisonAtom> cAtomList) {
+        childScanOp = child; // one scan child
         this.cAtomList = cAtomList;
         this.rAtomBody = rAtom.getTerms();
         this.variablePosMap = new HashMap<String, Integer>();
