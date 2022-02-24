@@ -1,22 +1,13 @@
 package ed.inf.adbs.minibase;
 
-import ed.inf.adbs.minibase.base.Query;
-import ed.inf.adbs.minibase.datamodel.Catalog;
-import ed.inf.adbs.minibase.operator.ScanOperator;
-import ed.inf.adbs.minibase.parser.QueryParser;
 import org.junit.Test;
 
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
 
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -53,7 +44,7 @@ public class MinibaseTest {
             String expectedRes = new String(Files.readAllBytes(Paths.get(expectedFile.getPath())), StandardCharsets.UTF_8);
             String actualRes = new String(Files.readAllBytes(Paths.get(acutalFile.getPath())), StandardCharsets.UTF_8);
 
-            assertEquals(expectedRes, actualRes);
+            assertEquals(expectedRes.trim(), actualRes.trim());
         }
     }
 }

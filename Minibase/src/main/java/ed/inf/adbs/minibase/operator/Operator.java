@@ -12,7 +12,15 @@ public abstract class Operator {
     abstract public void reset();
 
     public void dump(PrintStream ps) {
-        ps.print(Utils.join(dump(), System.lineSeparator()));
+        Tuple tuple = null;
+        while(true) {
+            tuple = getNextTuple();
+            if (tuple != null) {
+                ps.println(tuple);
+            } else {
+                break;
+            }
+        }
     }
 
     public List<Tuple> dump() {
