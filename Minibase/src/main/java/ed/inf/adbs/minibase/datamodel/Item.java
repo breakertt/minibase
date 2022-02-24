@@ -25,11 +25,5 @@ public abstract class Item {
         }
     }
 
-    public static int compareBetween(Item item1, Item item2) {
-        if (item1 instanceof ItemInteger) {
-            return ((ItemInteger) item1).getValue().compareTo(((ItemInteger) item2).getValue());
-        } else {
-            return ((ItemString) item1).getValue().compareTo(((ItemString) item2).getValue());
-        }
-    }
+    public abstract Comparable getValue();
 }

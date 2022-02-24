@@ -12,38 +12,45 @@ public class SelectOperator extends Operator {
     private final ScanOperator childScanOp;
     private final List<ComparisonAtom> cAtomList;
     private final List<Term> rAtomBody;
-    private HashMap<String, Integer> termnamePosMap;
+    private HashMap<String, Integer> variablePosMap;
 
     public SelectOperator(String tableName, RelationalAtom rAtom, List<ComparisonAtom> cAtomList) {
         childScanOp = new ScanOperator(tableName); // one scan child
         this.cAtomList = cAtomList;
         this.rAtomBody = rAtom.getTerms();
-        this.termnamePosMap = new HashMap<String, Integer>();
+        this.variablePosMap = new HashMap<String, Integer>();
     }
 
     private boolean explicitRulesCheck(Tuple tuple) {
         for (ComparisonAtom cAtom: cAtomList) {
-            Item item1 = convertTermToItem(cAtom.getTerm1(), tuple);
-            Item item2 = convertTermToItem(cAtom.getTerm2(), tuple);
-            if (!CompareCheck(Item.compareBetween(item1, item2), cAtom.getOp())) return false;
+            Comparable comparable1 = convertTermToComparable(cAtom.getTerm1(), tuple);
+            Comparable comparable2 = convertTermToComparable(cAtom.getTerm2(), tuple);
+            if (!CompareCheck(comparable1.compareTo(comparable2), cAtom.getOp())) return false;
         }
         return true;
     }
 
-    private Item convertTermToItem(Term term, Tuple tuple) {
+    private Comparable convertTermToComparable(Term term, Tuple tuple) {
         if (term instanceof Variable) {
-            String termName = ((Variable) term).getName();
-            if (!termnamePosMap.containsKey(termName)) {
-                int i;
-                for (i = 0; i < rAtomBody.size(); i++) {
-                    if (rAtomBody.get(i).toString().equals(termName)) break;
-                }
-                termnamePosMap.put(termName, i);
-                return tuple.getItems().get(i);
-            }
-            return tuple.getItems().get(termnamePosMap.get(termName));
+            return tuple.getItems().get(getVariablePosInBody((Variable) term)).getValue();
         } else {
-            return Item.itemBuilder((Constant) term);
+            return Item.itemBuilder((Constant) term).getValue();
+        }
+    }
+
+    private int getVariablePosInBody(Variable variable) {
+        String variableName = ((Variable) variable).getName();
+        if (!variablePosMap.containsKey(variableName)) {
+            int i;
+            for (i = 0; i < rAtomBody.size(); i++) {
+                if (rAtomBody.get(i).toString().equals(variableName)) {
+                    variablePosMap.put(variableName, i);
+                    return i;
+                }
+            }
+            return -1;
+        } else {
+            return variablePosMap.get(variableName);
         }
     }
 
@@ -71,7 +78,9 @@ public class SelectOperator extends Operator {
             Term term = rAtomBody.get(i);
             if (term instanceof Constant) {
                 Item item = Item.itemBuilder((Constant) term);
-                if (Item.compareBetween(item, tuple.getItems().get(i)) != 0) {
+                Comparable comparable1 = item.getValue();
+                Comparable comparable2 = tuple.getItems().get(i).getValue();
+                if (comparable1.compareTo(comparable2) != 0) {
                     return false;
                 }
             }
