@@ -61,13 +61,9 @@ public class SelectOperator extends Operator {
 
     private boolean implicitRulesCheck(Tuple tuple) {
         for (Integer i: constantTermPosList) {
-            Term term = rAtomBody.get(i);
-            Item item = Item.itemBuilder((Constant) term);
-            Comparable comparable1 = item.getValue();
+            Comparable comparable1 = Item.itemBuilder((Constant) rAtomBody.get(i)).getValue();
             Comparable comparable2 = tuple.getItems().get(i).getValue();
-            if (compareCheck(comparable1.compareTo(comparable2), ComparisonOperator.EQ)) {
-                return false;
-            }
+            if (compareCheck(comparable1.compareTo(comparable2), ComparisonOperator.EQ)) return false;
         }
         return true;
     }
