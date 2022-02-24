@@ -44,14 +44,14 @@ public class SelectOperator extends Operator {
 
     private boolean explicitRulesCheck(Tuple tuple) {
         for (ComparisonAtom cAtom: cAtomList) {
-            Comparable comparable1 = convertTermToComparable(cAtom.getTerm1(), tuple);
-            Comparable comparable2 = convertTermToComparable(cAtom.getTerm2(), tuple);
+            Comparable comparable1 = extractOrMatchValueForTerm(cAtom.getTerm1(), tuple);
+            Comparable comparable2 = extractOrMatchValueForTerm(cAtom.getTerm2(), tuple);
             if (!compareCheck(comparable1.compareTo(comparable2), cAtom.getOp())) return false;
         }
         return true;
     }
 
-    private Comparable convertTermToComparable(Term term, Tuple tuple) {
+    private Comparable extractOrMatchValueForTerm(Term term, Tuple tuple) {
         if (term instanceof Variable) {
             return tuple.getItems().get(getVariablePos((Variable) term)).getValue();
         } else {
