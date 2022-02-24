@@ -37,6 +37,18 @@ public class Minibase {
             ed.inf.adbs.minibase.Interpreter interpreter = new ed.inf.adbs.minibase.Interpreter(databaseDir, inputFile);
             PrintStream filePrintStream = new PrintStream(new FileOutputStream(outputFile));
             interpreter.dump(filePrintStream);
+            filePrintStream.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
+    }
+
+
+    public static void evaluateCQ(String databaseDir, String inputFile, PrintStream printStream) {
+        try {
+            ed.inf.adbs.minibase.Interpreter interpreter = new ed.inf.adbs.minibase.Interpreter(databaseDir, inputFile);
+            interpreter.dump(printStream);
         } catch (Exception e) {
             e.printStackTrace();
             System.exit(1);

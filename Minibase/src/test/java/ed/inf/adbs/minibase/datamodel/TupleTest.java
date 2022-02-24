@@ -23,7 +23,8 @@ public class TupleTest {
         } catch (Exception e) {
             e.printStackTrace();
         }
+        String tupleStr = "1, 9, 'adbs'";
         Tuple tuple = new Tuple("1, 9, 'adbs'", "R");
-        assertEquals(tuple.toString(), tuple.getRawStr());
+        assertEquals(tuple.toString(), tupleStr);
     }
 }

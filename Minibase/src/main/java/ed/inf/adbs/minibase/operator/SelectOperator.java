@@ -10,13 +10,13 @@ import java.util.List;
 
 public class SelectOperator extends Operator {
 
-    private final ScanOperator childScanOp;
+    private final Operator childScanOp;
     private final List<ComparisonAtom> cAtomList;
     private final List<Term> rAtomBody;
     private HashMap<String, Integer> variablePosMap;
     private List<Integer> constantTermPosList;
 
-    public SelectOperator(ScanOperator child, RelationalAtom rAtom, List<ComparisonAtom> cAtomList) {
+    public SelectOperator(Operator child, RelationalAtom rAtom, List<ComparisonAtom> cAtomList) {
         childScanOp = child; // one scan child
         this.cAtomList = cAtomList;
         this.rAtomBody = rAtom.getTerms();
@@ -63,7 +63,7 @@ public class SelectOperator extends Operator {
         for (Integer i: constantTermPosList) {
             Comparable comparable1 = Item.itemBuilder((Constant) rAtomBody.get(i)).getValue();
             Comparable comparable2 = tuple.getItems().get(i).getValue();
-            if (compareCheck(comparable1.compareTo(comparable2), ComparisonOperator.EQ)) return false;
+            if (!compareCheck(comparable1.compareTo(comparable2), ComparisonOperator.EQ)) return false;
         }
         return true;
     }

@@ -1,5 +1,6 @@
 package ed.inf.adbs.minibase.operator;
 
+import ed.inf.adbs.minibase.Utils;
 import ed.inf.adbs.minibase.datamodel.Tuple;
 
 import java.io.PrintStream;
@@ -11,9 +12,7 @@ public abstract class Operator {
     abstract public void reset();
 
     public void dump(PrintStream ps) {
-        for (Tuple tuple: dump()) {
-            ps.println(tuple);
-        }
+        ps.print(Utils.join(dump(), System.lineSeparator()));
     }
 
     public List<Tuple> dump() {

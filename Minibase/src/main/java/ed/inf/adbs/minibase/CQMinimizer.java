@@ -155,7 +155,7 @@ public class CQMinimizer {
         // name mismatch
         if (!src.getName().equals(dst.getName())) return false;
 
-        List<String> headTermStrList = head.getTerms().stream().map(Object::toString).collect(Collectors.toList());
+        List<String> headTermStrList = head.getTermStrList();
         List<Term> srcTerms = src.getTerms();
         List<Term> dstTerms = dst.getTerms();
 
@@ -227,7 +227,7 @@ public class CQMinimizer {
         for (int i = 0; i < body.size(); i++) {
             if (i == removedAtomPos) continue; // skip the atom to remove
             RelationalAtom atom = (RelationalAtom) body.get(i);
-            List<String> termStrList = atom.getTerms().stream().map(Object::toString).collect(Collectors.toList());
+            List<String> termStrList = atom.getTermStrList();
             String atomStrMapped = atom.toString();
             // apply mapping
             for (String termStr: termStrList) {
