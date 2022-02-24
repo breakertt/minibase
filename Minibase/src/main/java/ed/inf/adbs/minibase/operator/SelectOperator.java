@@ -4,6 +4,7 @@ import ed.inf.adbs.minibase.base.*;
 import ed.inf.adbs.minibase.datamodel.Item;
 import ed.inf.adbs.minibase.datamodel.Tuple;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -13,12 +14,32 @@ public class SelectOperator extends Operator {
     private final List<ComparisonAtom> cAtomList;
     private final List<Term> rAtomBody;
     private HashMap<String, Integer> variablePosMap;
+    private List<Integer> constantTermPosList;
 
     public SelectOperator(String tableName, RelationalAtom rAtom, List<ComparisonAtom> cAtomList) {
         childScanOp = new ScanOperator(tableName); // one scan child
         this.cAtomList = cAtomList;
         this.rAtomBody = rAtom.getTerms();
         this.variablePosMap = new HashMap<String, Integer>();
+        this.constantTermPosList = new ArrayList<>();
+        analysisAtomBody();
+    }
+
+    private void analysisAtomBody() {
+        int i;
+        for (i = 0; i < rAtomBody.size(); i++) {
+            Term term = rAtomBody.get(i);
+            if (term instanceof Variable) {
+                variablePosMap.put(((Variable) term).getName(), i);
+            } else {
+                constantTermPosList.add(i);
+            }
+        }
+    }
+
+    private int getVariablePos(Variable variable) {
+        String variableName = ((Variable) variable).getName();
+        return variablePosMap.getOrDefault(variableName, -1);
     }
 
     private boolean explicitRulesCheck(Tuple tuple) {
@@ -32,38 +53,20 @@ public class SelectOperator extends Operator {
 
     private Comparable convertTermToComparable(Term term, Tuple tuple) {
         if (term instanceof Variable) {
-            return tuple.getItems().get(getVariablePosInBody((Variable) term)).getValue();
+            return tuple.getItems().get(getVariablePos((Variable) term)).getValue();
         } else {
             return Item.itemBuilder((Constant) term).getValue();
         }
     }
 
-    private int getVariablePosInBody(Variable variable) {
-        String variableName = ((Variable) variable).getName();
-        if (!variablePosMap.containsKey(variableName)) {
-            int i;
-            for (i = 0; i < rAtomBody.size(); i++) {
-                if (rAtomBody.get(i).toString().equals(variableName)) {
-                    variablePosMap.put(variableName, i);
-                    return i;
-                }
-            }
-            return -1;
-        } else {
-            return variablePosMap.get(variableName);
-        }
-    }
-
     private boolean implicitRulesCheck(Tuple tuple) {
-        for (int i = 0; i < rAtomBody.size(); i++) {
+        for (Integer i: constantTermPosList) {
             Term term = rAtomBody.get(i);
-            if (term instanceof Constant) {
-                Item item = Item.itemBuilder((Constant) term);
-                Comparable comparable1 = item.getValue();
-                Comparable comparable2 = tuple.getItems().get(i).getValue();
-                if (compareCheck(comparable1.compareTo(comparable2), ComparisonOperator.EQ)) {
-                    return false;
-                }
+            Item item = Item.itemBuilder((Constant) term);
+            Comparable comparable1 = item.getValue();
+            Comparable comparable2 = tuple.getItems().get(i).getValue();
+            if (compareCheck(comparable1.compareTo(comparable2), ComparisonOperator.EQ)) {
+                return false;
             }
         }
         return true;
