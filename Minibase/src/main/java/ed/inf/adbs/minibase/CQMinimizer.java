@@ -90,82 +90,99 @@ public class CQMinimizer {
      * Iteratively find atom to remove
      *
      */
-    private static Query minimizeCq(Query query) {
+    public static Query minimizeCq(Query query) {
         RelationalAtom head = query.getHead();
         List<Atom> body = query.getBody();
 
+        // Remove one, try build a homomorphism from original one to one removed
         boolean isRemoved = true;
         while (isRemoved) {
             isRemoved = false;
             for (int i = 0; i < body.size(); i++) {
-                boolean canRemove = checkRemove(body, i, head);
-                if (canRemove) {
+                List<Atom> newBody = removeAtom(body, i);
+                boolean success = buildHomo(body, newBody, head);
+                if (success) {
                     System.out.println("Remove Atom : " + body + " at Position " + i);
-                    body.remove(i);
+                    body = newBody;
                     isRemoved = true;
                     break;
                 }
             }
         }
         System.out.println("Body: " + body);
-        return query;
+        return new Query(head, body);
     }
 
-    /**
-     * Check whether an atom can be remove by finding another atom to transform to
-     *
-     * Firstly, find another atom and perform basic checks (name, length, constant -> variable)
-     * Secondly, build a partial homo mapping between atom to remove and atom for transform
-     * Thirdly, check the homo mapping on atoms except the one to remove
-     *
-     */
-    private static boolean checkRemove(List<Atom> body, int atomPos, RelationalAtom head) {
-        RelationalAtom aToRemove = (RelationalAtom) body.get(atomPos);
+    private static <T> List<T> cloneList(List<T> list) {
+        List<T> newList = new ArrayList<>();
+        newList.addAll(list);
+        return newList;
+    }
 
-        // find another atom for the atom to remove to transform
-        for (int i = 0; i < body.size(); i++) {
-            if (i == atomPos) continue;
-            RelationalAtom aForTransform = (RelationalAtom) body.get(i);
-            // term-level checks
-            if (!checkTermLevelHomo(aToRemove, aForTransform, head)) continue;
-            // build partial homomorphism mapping
-            HashMap<String, Term> homoMapping = buildPartialHomo(aToRemove, aForTransform);
-            if (homoMapping == null) continue; // build homo failed due to one-to-many mapping
-            // create a new body
-            List<Atom> bodyDeletedOne = new ArrayList<>();
-            bodyDeletedOne.addAll(body);
-            bodyDeletedOne.remove(atomPos);
-            // apply mapping to all atoms
-            List<Atom> bodyDeletedMappedList = mapAtoms(homoMapping, bodyDeletedOne);
-            // homo check - two check methods
-            // method 1 - trivial check, all atoms are in the body after mapping
-            List<String> bodyDeletedStrList = bodyDeletedOne.stream().map(Object::toString).collect(Collectors.toList());
-            List<Integer> mismatchList = new ArrayList<>();
-            for (int j = 0; j < bodyDeletedMappedList.size(); j++) {
-                if (!bodyDeletedStrList.contains(bodyDeletedMappedList.get(j).toString())) {
-                    mismatchList.add(j);
-                }
-            }
-            if (mismatchList.size() == 0) return true;
-            // method 2 - complex check, find a homo back to original body
+    private static List<Atom> removeAtom(List<Atom> body, int atomPos) {
+        List<Atom> newBody = cloneList(body);
+        newBody.remove(atomPos);
+        return newBody;
+    }
+
+    private static boolean buildHomo(List<Atom> body, List<Atom> newBody, RelationalAtom head) {
+        return buildHomoHelper(cloneList(body), newBody, head, new ArrayList<>());
+    }
+
+    private static boolean buildHomoHelper(List<Atom> body, List<Atom> newBody, RelationalAtom head, List<HashMap<String, Term>> partialHomos ) {
+        if (body.size() == 0) {
+            return true;
         }
+        for (int i = 0; i < body.size(); i++) {
+            RelationalAtom atomToEliminate = (RelationalAtom) body.get(i);
+            for (int j = 0; j < newBody.size(); j++) {
+                RelationalAtom atomCandidateTransform = (RelationalAtom) newBody.get(j);
+                // term-level checks
+                if (!checkTermLevelHomo(atomToEliminate, atomCandidateTransform, head)) continue;
+                // build partial homomorphism mapping
+                HashMap<String, Term> homoMapping = buildTermLevelHomo(atomToEliminate, atomCandidateTransform, partialHomos);
+                if (homoMapping == null) continue; // build homo failed due to one-to-many mapping
 
+                List<Atom> tmpBody = removeAtom(body, i);
+                List<HashMap<String, Term>> tmpPartialHomos = cloneList(partialHomos);
+                tmpPartialHomos.add(homoMapping);
+                if (buildHomoHelper(tmpBody, newBody, head, tmpPartialHomos)) return true;
+            }
+        }
         return false;
     }
 
-    private static List<Atom> mapAtoms(HashMap<String, Term> homoMapping, List<Atom> bodyDeletedOne) {
-        List<Atom> bodyDeletedMappedList = new ArrayList<>();
-        for (int j = 0; j < bodyDeletedOne.size(); j++) {
-            RelationalAtom oldAtom = (RelationalAtom) bodyDeletedOne.get(j);
-            List<Term> oldTermList = oldAtom.getTerms();
-            List<Term> newTermList = new ArrayList<>();
-            for (Term oldTerm: oldTermList) {
-                newTermList.add(homoMapping.getOrDefault(oldTerm.toString(), oldTerm));
+    private static HashMap<String, Term> buildTermLevelHomo(RelationalAtom src, RelationalAtom dst, List<HashMap<String, Term>> partialHomos) {
+        List<Term> srcTerms = src.getTerms();
+        List<Term> dstTerms = dst.getTerms();
+
+        HashMap<String, Term> localHomo = new HashMap<>();
+        int i;
+        for (i = 0; i < srcTerms.size(); i++) {
+            String key = srcTerms.get(i).toString();
+            String valueStr = dstTerms.get(i).toString();
+            boolean isKeyExist = false;
+            for (HashMap<String, Term> partialHomo: partialHomos) {
+                if (partialHomo.containsKey(key)) {
+                    if (!partialHomo.get(key).toString().equals(valueStr)) {
+                        return null;
+                    } else {
+                        isKeyExist = true;
+                    }
+                }
             }
-            RelationalAtom newAtom = new RelationalAtom(oldAtom.getName(), newTermList);
-            bodyDeletedMappedList.add(newAtom);
+            if (isKeyExist) continue;
+            if (localHomo.containsKey(key)) {
+                if (!localHomo.get(key).toString().equals(valueStr)) {
+                    return null;
+                } else {
+                    isKeyExist = true;
+                }
+            }
+            if (isKeyExist) continue;
+            localHomo.put(key, dstTerms.get(i));
         }
-        return bodyDeletedMappedList;
+        return localHomo;
     }
 
 
@@ -212,59 +229,6 @@ public class CQMinimizer {
         }
 
         // pass all checks
-        return true;
-    }
-
-    /**
-     * build a key-value pair for homo mapping between src and dst
-     *
-     * if the mapping can not be constructed (i.e. one-to-many mapping), null will be returned
-     *
-     * @param src an atom to be transform
-     * @param dst an atom for src to transform to
-     * @return a key-value pair, key is the original term, value is the term after mapping
-     */
-    private static HashMap<String, Term> buildPartialHomo(RelationalAtom src, RelationalAtom dst) {
-        List<Term> srcTerms = src.getTerms();
-        List<Term> dstTerms = dst.getTerms();
-
-        HashMap<String, Term> homoMapping = new HashMap<>();
-        int i;
-        for (i = 0; i < srcTerms.size(); i++) {
-            String key = srcTerms.get(i).toString();
-            String valueStr = dstTerms.get(i).toString();
-            if (homoMapping.containsKey(key)) {
-                // no one-to-many mapping
-                if (!homoMapping.get(key).toString().equals(valueStr)) return null;
-            } else {
-                homoMapping.put(key, dstTerms.get(i));
-            }
-        }
-        return homoMapping;
-    }
-
-    /**
-     * Check whether atoms except the one to remove, still exist in the CQ body after mapping
-     *
-     * @param body main body of cq with one atom removed
-     * @param homoMapping key-value pair for homo mapping
-     * @return a boolean showing the homo is valid
-     */
-    private static boolean checkPartialHomoSubset(List<Atom> body, HashMap<String, String> homoMapping) {
-        List<String> atomStrList = body.stream().map(Object::toString).collect(Collectors.toList());
-        for (int i = 0; i < body.size(); i++) {
-            RelationalAtom atom = (RelationalAtom) body.get(i);
-            List<String> termStrList = atom.getTermStrList();
-            String atomStrMapped = atom.toString();
-            // apply mapping
-            for (String termStr: termStrList) {
-                if (homoMapping.containsKey(termStr)) {
-                    atomStrMapped = atomStrMapped.replace(termStr, homoMapping.get(termStr));
-                }
-            }
-            // if the atom is not exists the CQ body, homo mapping is invalid
-            if (!atomStrList.contains(atomStrMapped)) return false;
-        }
         return true;
     }
 
