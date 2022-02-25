@@ -10,7 +10,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  *
@@ -20,7 +19,6 @@ import java.util.stream.Collectors;
 public class CQMinimizer {
 
     public static void main(String[] args) {
-
         if (args.length != 2) {
             System.err.println("Usage: CQMinimizer input_file output_file");
             return;
@@ -92,6 +90,8 @@ public class CQMinimizer {
         RelationalAtom head = query.getHead();
         List<Atom> body = query.getBody();
 
+//        System.out.println("Initial Body: " + body);
+
         // Remove one, try build a homomorphism from original one to one removed
         boolean isRemoved = true;
         while (isRemoved) {
@@ -100,14 +100,15 @@ public class CQMinimizer {
                 List<Atom> newBody = removeAtom(body, i);
                 boolean success = buildHomo(body, newBody, head);
                 if (success) {
-                    System.out.println("Remove Atom : " + body + " at Position " + i);
+//                    System.out.println("Remove Atom : " + body.get(i) + " at Position " + i);
                     body = newBody;
+//                    System.out.println("New Body : " + body);
                     isRemoved = true;
                     break;
                 }
             }
         }
-        System.out.println("Body: " + body);
+//        System.out.println("Final Body: " + body);
         return new Query(head, body);
     }
 
@@ -127,7 +128,7 @@ public class CQMinimizer {
 
     private static boolean buildHomoHelper(List<Atom> body, List<Atom> newBody, RelationalAtom head, List<HashMap<String, Term>> partialHomos ) {
         if (body.size() == 0) {
-            System.out.println(partialHomos);
+//            System.out.println("Q -> Q/{a} Homomorphism: " + partialHomos);
             return true;
         }
         for (int i = 0; i < body.size(); i++) {
@@ -138,8 +139,8 @@ public class CQMinimizer {
                 if (!checkTermLevelHomo(atomToEliminate, atomCandidateTransform, head)) continue;
                 // build partial homomorphism mapping
                 HashMap<String, Term> homoMapping = buildTermLevelHomo(atomToEliminate, atomCandidateTransform, partialHomos);
-                if (homoMapping == null) continue; // build homo failed due to one-to-many mapping
-
+                if (homoMapping == null) continue; // build homo failed
+                // remove another atom with previous homo mapping and new built one
                 List<Atom> tmpBody = removeAtom(body, i);
                 List<HashMap<String, Term>> tmpPartialHomos = cloneList(partialHomos);
                 if (homoMapping.size() > 0) tmpPartialHomos.add(homoMapping);
