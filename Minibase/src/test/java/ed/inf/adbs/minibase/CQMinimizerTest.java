@@ -50,7 +50,7 @@ public class CQMinimizerTest {
 
     @Test
     public void minimizerTestTemp() throws IOException {
-        Query query = QueryParser.parse("Q() :- R(x, y, z), R(1, 2, 3), S(y, u), S(2, 4)");
+        Query query = QueryParser.parse("Q(x, y) :- R(y, x, z), R(w, v, z), T(x, z), T(x, a), R(y, x, a)");
         System.out.println(CQMinimizer.minimizeCq(query));
     }
 }

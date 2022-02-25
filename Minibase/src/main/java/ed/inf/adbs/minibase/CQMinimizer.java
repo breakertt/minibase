@@ -30,8 +30,6 @@ public class CQMinimizer {
         String outputFile = args[1];
 
         cqMinimizerPipe(inputFile, outputFile);
-
-//        parsingExample(inputFile);
     }
 
     /**
@@ -114,9 +112,7 @@ public class CQMinimizer {
     }
 
     private static <T> List<T> cloneList(List<T> list) {
-        List<T> newList = new ArrayList<>();
-        newList.addAll(list);
-        return newList;
+        return new ArrayList<>(list);
     }
 
     private static List<Atom> removeAtom(List<Atom> body, int atomPos) {
@@ -131,6 +127,7 @@ public class CQMinimizer {
 
     private static boolean buildHomoHelper(List<Atom> body, List<Atom> newBody, RelationalAtom head, List<HashMap<String, Term>> partialHomos ) {
         if (body.size() == 0) {
+            System.out.println(partialHomos);
             return true;
         }
         for (int i = 0; i < body.size(); i++) {
@@ -145,7 +142,7 @@ public class CQMinimizer {
 
                 List<Atom> tmpBody = removeAtom(body, i);
                 List<HashMap<String, Term>> tmpPartialHomos = cloneList(partialHomos);
-                tmpPartialHomos.add(homoMapping);
+                if (homoMapping.size() > 0) tmpPartialHomos.add(homoMapping);
                 if (buildHomoHelper(tmpBody, newBody, head, tmpPartialHomos)) return true;
             }
         }
@@ -159,8 +156,17 @@ public class CQMinimizer {
         HashMap<String, Term> localHomo = new HashMap<>();
         int i;
         for (i = 0; i < srcTerms.size(); i++) {
+            Term keyTerm = srcTerms.get(i);
+            Term value = dstTerms.get(i);
             String key = srcTerms.get(i).toString();
             String valueStr = dstTerms.get(i).toString();
+            if (keyTerm instanceof Constant && value instanceof Constant) {
+                if (key.equals(valueStr)) {
+                    continue;
+                } else {
+                    return null;
+                }
+            }
             boolean isKeyExist = false;
             for (HashMap<String, Term> partialHomo: partialHomos) {
                 if (partialHomo.containsKey(key)) {
@@ -180,11 +186,10 @@ public class CQMinimizer {
                 }
             }
             if (isKeyExist) continue;
-            localHomo.put(key, dstTerms.get(i));
+            localHomo.put(key, value);
         }
         return localHomo;
     }
-
 
     /**
      * Check whether a source relational atom can transform to a dst relational atom with a homo mapping.
@@ -230,32 +235,6 @@ public class CQMinimizer {
 
         // pass all checks
         return true;
-    }
-
-    /**
-     * Example method for getting started with the parser.
-     * Reads CQ from a file and prints it to screen, then extracts Head and Body
-     * from the query and prints them to screen.
-     */
-
-    public static void parsingExample(String filename) {
-
-        try {
-            Query query = QueryParser.parse(Paths.get(filename));
-//            Query query = QueryParser.parse("Q(x, y) :- R(x, z), S(y, z, w)");
-//            Query query = QueryParser.parse("Q() :- R(x, 'z'), S(4, z, w)");
-
-            System.out.println("Entire query: " + query);
-            RelationalAtom head = query.getHead();
-            System.out.println("Head: " + head);
-            List<Atom> body = query.getBody();
-            System.out.println("Body: " + body);
-        }
-        catch (Exception e)
-        {
-            System.err.println("Exception occurred during parsing");
-            e.printStackTrace();
-        }
     }
 
 }

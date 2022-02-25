@@ -4,7 +4,6 @@ import ed.inf.adbs.minibase.base.Atom;
 import ed.inf.adbs.minibase.base.Query;
 import ed.inf.adbs.minibase.base.RelationalAtom;
 import ed.inf.adbs.minibase.parser.QueryParser;
-import jdk.internal.org.objectweb.asm.tree.analysis.Interpreter;
 
 import java.io.*;
 import java.nio.file.Paths;
