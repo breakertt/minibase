@@ -90,7 +90,7 @@ public class CQMinimizer {
         RelationalAtom head = query.getHead();
         List<Atom> body = query.getBody();
 
-//        System.out.println("Initial Body: " + body);
+        System.out.println("Initial Body: " + body);
 
         // Remove one, try build a homomorphism from original one to one removed
         boolean isRemoved = true;
@@ -100,18 +100,18 @@ public class CQMinimizer {
                 List<Atom> newBody = removeAtom(body, i);
                 // give the atom be removed the highest priority
                 List<Atom> tmpBody = removeAtom(body, i);
-                tmpBody.add(body.get(i));
+                tmpBody.add(0, body.get(i));
                 boolean success = buildHomo(tmpBody, newBody, head);
                 if (success) {
-//                    System.out.println("Remove Atom : " + body.get(i) + " at Position " + i);
+                    System.out.println("Remove Atom : " + body.get(i) + " at Position " + i);
                     body = newBody;
-//                    System.out.println("New Body : " + body);
+                    System.out.println("New Body : " + body);
                     isRemoved = true;
                     break;
                 }
             }
         }
-//        System.out.println("Final Body: " + body);
+        System.out.println("Final Body: " + body);
         return new Query(head, body);
     }
 
@@ -131,24 +131,22 @@ public class CQMinimizer {
 
     private static boolean buildHomoHelper(List<Atom> body, List<Atom> newBody, RelationalAtom head, List<HashMap<String, Term>> partialHomos ) {
         if (body.size() == 0) {
-//            System.out.println("Q -> Q/{a} Homomorphism: " + partialHomos);
+            System.out.println("Q -> Q/{a} Homomorphism: " + partialHomos);
             return true;
         }
-        for (int i = 0; i < body.size(); i++) {
-            RelationalAtom atomToEliminate = (RelationalAtom) body.get(i);
-            for (int j = 0; j < newBody.size(); j++) {
-                RelationalAtom atomCandidateTransform = (RelationalAtom) newBody.get(j);
-                // term-level checks
-                if (!checkTermLevelHomo(atomToEliminate, atomCandidateTransform, head)) continue;
-                // build partial homomorphism mapping
-                HashMap<String, Term> homoMapping = buildTermLevelHomo(atomToEliminate, atomCandidateTransform, partialHomos);
-                if (homoMapping == null) continue; // build homo failed
-                // remove another atom with previous homo mapping and new built one
-                List<Atom> tmpBody = removeAtom(body, i);
-                List<HashMap<String, Term>> tmpPartialHomos = cloneList(partialHomos);
-                if (homoMapping.size() > 0) tmpPartialHomos.add(homoMapping);
-                if (buildHomoHelper(tmpBody, newBody, head, tmpPartialHomos)) return true;
-            }
+        RelationalAtom atomToEliminate = (RelationalAtom) body.get(0);
+        for (int i = 0; i < newBody.size(); i++) {
+            RelationalAtom atomCandidateTransform = (RelationalAtom) newBody.get(i);
+            // term-level checks
+            if (!checkTermLevelHomo(atomToEliminate, atomCandidateTransform, head)) continue;
+            // build partial homomorphism mapping
+            HashMap<String, Term> homoMapping = buildTermLevelHomo(atomToEliminate, atomCandidateTransform, partialHomos);
+            if (homoMapping == null) continue; // build homo failed
+            // remove another atom with previous homo mapping and new built one
+            List<Atom> tmpBody = removeAtom(body, 0);
+            List<HashMap<String, Term>> tmpPartialHomos = cloneList(partialHomos);
+            if (homoMapping.size() > 0) tmpPartialHomos.add(homoMapping);
+            if (buildHomoHelper(tmpBody, newBody, head, tmpPartialHomos)) return true;
         }
         return false;
     }
