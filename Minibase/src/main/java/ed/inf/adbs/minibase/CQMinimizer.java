@@ -98,7 +98,10 @@ public class CQMinimizer {
             isRemoved = false;
             for (int i = 0; i < body.size(); i++) {
                 List<Atom> newBody = removeAtom(body, i);
-                boolean success = buildHomo(body, newBody, head);
+                // give the atom be removed the highest priority
+                List<Atom> tmpBody = removeAtom(body, i);
+                tmpBody.add(body.get(i));
+                boolean success = buildHomo(tmpBody, newBody, head);
                 if (success) {
 //                    System.out.println("Remove Atom : " + body.get(i) + " at Position " + i);
                     body = newBody;
@@ -123,7 +126,7 @@ public class CQMinimizer {
     }
 
     private static boolean buildHomo(List<Atom> body, List<Atom> newBody, RelationalAtom head) {
-        return buildHomoHelper(cloneList(body), newBody, head, new ArrayList<>());
+        return buildHomoHelper(body, newBody, head, new ArrayList<>());
     }
 
     private static boolean buildHomoHelper(List<Atom> body, List<Atom> newBody, RelationalAtom head, List<HashMap<String, Term>> partialHomos ) {
