@@ -90,7 +90,6 @@ public class CQMinimizer {
         RelationalAtom head = query.getHead();
         List<Atom> body = query.getBody();
 
-        System.out.println("Initial Body: " + body);
 
         // Remove one, try build a homomorphism from original one to one removed
         boolean isRemoved = true;
@@ -101,7 +100,8 @@ public class CQMinimizer {
                 // give the atom be removed the highest priority
                 List<Atom> tmpBody = removeAtom(body, i);
                 tmpBody.add(0, body.get(i));
-                boolean success = buildHomo(tmpBody, newBody, head);
+                System.out.println("Initial Body: " + tmpBody);
+                boolean success = buildHomo(body, newBody, head, new ArrayList<>());
                 if (success) {
                     System.out.println("Remove Atom : " + body.get(i) + " at Position " + i);
                     body = newBody;
@@ -125,11 +125,7 @@ public class CQMinimizer {
         return newBody;
     }
 
-    private static boolean buildHomo(List<Atom> body, List<Atom> newBody, RelationalAtom head) {
-        return buildHomoHelper(body, newBody, head, new ArrayList<>());
-    }
-
-    private static boolean buildHomoHelper(List<Atom> body, List<Atom> newBody, RelationalAtom head, List<HashMap<String, Term>> partialHomos ) {
+    private static boolean buildHomo(List<Atom> body, List<Atom> newBody, RelationalAtom head, List<HashMap<String, Term>> partialHomos ) {
         if (body.size() == 0) {
             System.out.println("Q -> Q/{a} Homomorphism: " + partialHomos);
             return true;
@@ -146,7 +142,7 @@ public class CQMinimizer {
             List<Atom> tmpBody = removeAtom(body, 0);
             List<HashMap<String, Term>> tmpPartialHomos = cloneList(partialHomos);
             if (homoMapping.size() > 0) tmpPartialHomos.add(homoMapping);
-            if (buildHomoHelper(tmpBody, newBody, head, tmpPartialHomos)) return true;
+            if (buildHomo(tmpBody, newBody, head, tmpPartialHomos)) return true;
         }
         return false;
     }

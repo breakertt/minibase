@@ -49,4 +49,11 @@ public class ScanOperator extends Operator {
             e.printStackTrace();
         }
     }
+
+    @Override
+    public String toString() {
+        return "ScanOperator{" +
+                "tableName='" + tableName + '\'' +
+                '}';
+    }
 }

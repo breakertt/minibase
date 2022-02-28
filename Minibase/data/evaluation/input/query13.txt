@@ -1,0 +1,1 @@
+Q(x, SUM(t)) :- R(x, y, z), S(x, w, t), T(d, 5), T (u, v), x > 5, x < y, z < w, x < d, x = v

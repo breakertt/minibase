@@ -16,10 +16,10 @@ public class ProjectOperator extends Operator {
     public ProjectOperator(Operator child, RelationalAtom input, RelationalAtom output) throws Exception {
         this.child = child;
         this.tupleRecord = new HashSet<>();
-        analysisProjection(input, output);
+        analysisProject(input, output);
     }
 
-    private void analysisProjection(RelationalAtom input, RelationalAtom output) throws Exception {
+    private void analysisProject(RelationalAtom input, RelationalAtom output) throws Exception {
         List<Term> outputTerms = output.getTerms();
         reorderArray = new Integer[outputTerms.size()];
         List<String> inputTermStrList = input.getTermStrList();

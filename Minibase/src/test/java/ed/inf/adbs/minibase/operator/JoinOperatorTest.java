@@ -25,7 +25,7 @@ public class JoinOperatorTest {
     }
 
     @Test
-    public void joinOpSimpleDumpTest() {
+    public void joinOpSimpleNonNullDumpTest() {
         try {
             Catalog.INSTANCE.loadCatalog("data/evaluation/db");
         } catch (Exception e) {
@@ -37,7 +37,24 @@ public class JoinOperatorTest {
         Operator child1 = new ScanOperator("R");
         Operator child2 = new ScanOperator("S");
         JoinOperator joinOperator = new JoinOperator(child1, child2, atom1, atom2);
-//        System.out.println(joinOperator);
+        System.out.println(joinOperator);
+        joinOperator.dump(System.out);
+    }
+
+    @Test
+    public void joinOpSimpleNullDumpTest() {
+        try {
+            Catalog.INSTANCE.loadCatalog("data/evaluation/db");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        Query query = QueryParser.parse("Q() :- R(a, b, c), S(d, e, f)");
+        RelationalAtom atom1 = (RelationalAtom) query.getBody().get(0);
+        RelationalAtom atom2 = (RelationalAtom) query.getBody().get(1);
+        Operator child1 = new ScanOperator("R");
+        Operator child2 = new ScanOperator("S");
+        JoinOperator joinOperator = new JoinOperator(child1, child2, atom1, atom2);
+        System.out.println(joinOperator);
         joinOperator.dump(System.out);
     }
 }

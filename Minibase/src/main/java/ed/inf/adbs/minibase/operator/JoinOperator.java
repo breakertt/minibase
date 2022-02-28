@@ -2,6 +2,7 @@ package ed.inf.adbs.minibase.operator;
 
 import ed.inf.adbs.minibase.base.RelationalAtom;
 import ed.inf.adbs.minibase.base.Term;
+import ed.inf.adbs.minibase.datamodel.Pair;
 import ed.inf.adbs.minibase.datamodel.Tuple;
 
 import java.util.ArrayList;
@@ -98,24 +99,8 @@ public class JoinOperator extends Operator {
         return "JoinOperator{" +
                 "child1=" + child1 +
                 ", child2=" + child2 +
-                ", atom1=" + atom1 +
-                ", atom2=" + atom2 +
-                ", atomOutput=" + atomOutput +
-                ", reorderList=" + reorderList +
-                ", equalPairList=" + equalPairList +
                 '}';
     }
 
-    static class Pair {
-        public int a, b;
-        Pair(int a, int b) {
-            this.a = a;
-            this.b = b;
-        }
 
-        @Override
-        public String toString() {
-            return "Pair{" + a + ", " + b + "}";
-        }
-    }
 }

@@ -10,22 +10,22 @@ import java.util.List;
 
 public class SelectOperator extends Operator {
 
-    private final Operator childScanOp;
+    private final Operator child;
     private final List<ComparisonAtom> cAtomList;
     private final List<Term> rAtomBody;
     private HashMap<String, Integer> variablePosMap;
     private List<Integer> constantTermPosList;
 
     public SelectOperator(Operator child, RelationalAtom rAtom, List<ComparisonAtom> cAtomList) {
-        childScanOp = child; // one scan child
+        this.child = child; // one scan child
         this.cAtomList = cAtomList;
         this.rAtomBody = rAtom.getTerms();
         this.variablePosMap = new HashMap<String, Integer>();
         this.constantTermPosList = new ArrayList<>();
-        analysisAtomBody();
+        analysisSelect();
     }
 
-    private void analysisAtomBody() {
+    private void analysisSelect() {
         int i;
         for (i = 0; i < rAtomBody.size(); i++) {
             Term term = rAtomBody.get(i);
@@ -48,6 +48,8 @@ public class SelectOperator extends Operator {
             Comparable comparable2 = extractOrMatchValueForTerm(cAtom.getTerm2(), tuple);
             if (!compareCheck(comparable1.compareTo(comparable2), cAtom.getOp())) return false;
         }
+
+
         return true;
     }
 
@@ -90,7 +92,7 @@ public class SelectOperator extends Operator {
     @Override
     public Tuple getNextTuple() {
         Tuple tuple = null;
-        while ((tuple = childScanOp.getNextTuple()) != null) {
+        while ((tuple = child.getNextTuple()) != null) {
             if (explicitRulesCheck(tuple) && implicitRulesCheck(tuple)) return tuple;
         }
         return null;
@@ -98,7 +100,14 @@ public class SelectOperator extends Operator {
 
     @Override
     public void reset() {
-        childScanOp.reset();
+        child.reset();
     }
 
+    @Override
+    public String toString() {
+        return "SelectOperator{" +
+                "child=" + child +
+                ", cAtomList=" + cAtomList +
+                '}';
+    }
 }
