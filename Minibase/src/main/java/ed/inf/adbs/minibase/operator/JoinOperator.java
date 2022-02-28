@@ -66,14 +66,15 @@ public class JoinOperator extends Operator {
                 child2.reset();
                 tuple2 = child2.getNextTuple();
                 tuple1 = child1.getNextTuple();
-                if (tuple2 == null) {
+                if (tuple2 == null || tuple1 == null) {
                     return null;
                 }
             }
             boolean isEqualOnVariables = true;
             for (Pair pair: equalPairList) {
-                boolean isEqualOnVariable = tuple1.getItems().get(pair.a).equals(tuple2.getItems().get(pair.b));
-                isEqualOnVariables = isEqualOnVariables && isEqualOnVariable;
+                Comparable item1Val = tuple1.getItems().get(pair.a).getValue();
+                Comparable item2Val = tuple2.getItems().get(pair.b).getValue();
+                isEqualOnVariables = isEqualOnVariables && (item1Val.compareTo(item2Val) == 0);
             }
             if (isEqualOnVariables) {
                 return new Tuple(tuple1, tuple2, atomOutput.getName(), reorderList.toArray(new Integer[0]));
