@@ -13,6 +13,7 @@ public class JoinOperator extends Operator {
     private final Operator child2;
     private final RelationalAtom atom1;
     private final RelationalAtom atom2;
+    private Tuple tuple1;
     private RelationalAtom atomOutput;
     private List<Integer> reorderList; // atomOutput term pos -> atom1&atom2 term pos
     private List<Pair> equalPairList;
@@ -52,6 +53,41 @@ public class JoinOperator extends Operator {
     }
 
     @Override
+    public Tuple getNextTuple() {
+        while (true) {
+            if (tuple1 == null) {
+                tuple1 = child1.getNextTuple();
+                if (tuple1 == null) {
+                    return null;
+                }
+            }
+            Tuple tuple2 = child2.getNextTuple();
+            if (tuple2 == null) {
+                child2.reset();
+                tuple2 = child2.getNextTuple();
+                tuple1 = child1.getNextTuple();
+                if (tuple2 == null) {
+                    return null;
+                }
+            }
+            boolean isEqualOnVariables = true;
+            for (Pair pair: equalPairList) {
+                boolean isEqualOnVariable = tuple1.getItems().get(pair.a).equals(tuple2.getItems().get(pair.b));
+                isEqualOnVariables = isEqualOnVariables && isEqualOnVariable;
+            }
+            if (isEqualOnVariables) {
+                return new Tuple(tuple1, tuple2, atomOutput.getName(), reorderList.toArray(new Integer[0]));
+            }
+        }
+    }
+
+    @Override
+    public void reset() {
+        child1.reset();
+        child2.reset();
+    }
+
+    @Override
     public String toString() {
         return "JoinOperator{" +
                 "child1=" + child1 +
@@ -62,18 +98,6 @@ public class JoinOperator extends Operator {
                 ", reorderList=" + reorderList +
                 ", equalPairList=" + equalPairList +
                 '}';
-    }
-
-    @Override
-    public Tuple getNextTuple() {
-
-        return null;
-    }
-
-    @Override
-    public void reset() {
-        child1.reset();
-        child2.reset();
     }
 
     static class Pair {

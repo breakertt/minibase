@@ -20,6 +20,15 @@ public class Tuple {
         this.items = reorderTupleItems(oldTuple.getItems(), reorderArray);
     }
 
+    // Combine two tuples and shrink
+    public Tuple(Tuple tuple1, Tuple tuple2, String tableName, Integer[] reorderArray) {
+        this.tableName = tableName;
+        ArrayList<Item> items = new ArrayList<>();
+        items.addAll(tuple1.getItems());
+        items.addAll(tuple2.getItems());
+        this.items = reorderTupleItems(items, reorderArray);
+    }
+
     private ArrayList<Item> parseTupleStr(String tupleStr) {
         String[] itemContentStrList = tupleStr.split(", ");
         String[] itemSchemaStrList = null;
