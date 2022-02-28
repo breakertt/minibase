@@ -15,20 +15,19 @@ public class Tuple {
         this.items = parseTupleStr(tupleStr);
     }
 
-    public Tuple(Tuple oldTuple, Integer[] reorderList) {
+    public Tuple(Tuple oldTuple, Integer[] reorderArray) {
         this.tableName = oldTuple.tableName;
-        this.items = reorderTupleItems(oldTuple.getItems(), reorderList);
+        this.items = reorderTupleItems(oldTuple.getItems(), reorderArray);
     }
 
     private ArrayList<Item> parseTupleStr(String tupleStr) {
         String[] itemContentStrList = tupleStr.split(", ");
         String[] itemSchemaStrList = null;
         try {
-            String tableSchema = Catalog.INSTANCE.queryTableSchema(tableName);
-            if (tableSchema == null) {
+            itemSchemaStrList = Catalog.INSTANCE.queryTableSchemaStrList(tableName);
+            if (itemSchemaStrList == null) {
                 throw new Exception("Table not found in Catalog");
             }
-            itemSchemaStrList = tableSchema.split(" ");
             if (!itemSchemaStrList[0].equals(tableName)) {
                 throw new Exception("Table schema and name mismatch");
             }
@@ -45,9 +44,9 @@ public class Tuple {
         return items;
     }
 
-    private ArrayList<Item> reorderTupleItems(ArrayList<Item> oldItems, Integer[] reorderList) {
+    private ArrayList<Item> reorderTupleItems(ArrayList<Item> oldItems, Integer[] reorderArray) {
         ArrayList<Item> items = new ArrayList<>();
-        for (Integer oldItemPos: reorderList) {
+        for (Integer oldItemPos: reorderArray) {
             items.add(oldItems.get(oldItemPos));
         }
         return items;

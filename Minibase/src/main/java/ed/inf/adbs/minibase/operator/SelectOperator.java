@@ -38,7 +38,7 @@ public class SelectOperator extends Operator {
     }
 
     private int getVariablePos(Variable variable) {
-        String variableName = ((Variable) variable).getName();
+        String variableName = variable.getName();
         return variablePosMap.getOrDefault(variableName, -1);
     }
 

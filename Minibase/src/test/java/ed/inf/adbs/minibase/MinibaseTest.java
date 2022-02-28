@@ -18,7 +18,7 @@ public class MinibaseTest {
 
     @Test
     public void minibaseTempTest() {
-        Minibase.evaluateCQ("data/evaluation/db", "data/evaluation/input/query1.txt", System.out);
+        Minibase.evaluateCQ("data/evaluation/db", "data/evaluation/input/query12.txt", System.out);
     }
 
     @Test

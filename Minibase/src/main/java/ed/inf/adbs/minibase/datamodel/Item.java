@@ -5,6 +5,7 @@ import ed.inf.adbs.minibase.base.IntegerConstant;
 import ed.inf.adbs.minibase.base.StringConstant;
 
 public abstract class Item {
+
     public static Item itemBuilder(String content, String type) {
         if (type.equals("int")) {
             return new ItemInteger(content);

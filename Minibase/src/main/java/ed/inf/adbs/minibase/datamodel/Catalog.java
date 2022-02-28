@@ -67,15 +67,25 @@ public enum Catalog {
         }
     }
 
+    public String[] queryTableSchemaStrList(String name) {
+        if (catalog.containsKey(name)) {
+            return catalog.get(name).getSchemaStrList();
+        } else {
+            return null;
+        }
+    }
+
     private static class Table {
         private final String name;
         private final String path;
         private final String schema;
+        private final String[] schemaStrList;
 
         Table(String name, String path, String schema) {
             this.name = name;
             this.path = path;
             this.schema = schema;
+            this.schemaStrList = schema.split(" ");
         }
 
         public String getName() {
@@ -88,6 +98,10 @@ public enum Catalog {
 
         public String getSchema() {
             return schema;
+        }
+
+        public String[] getSchemaStrList() {
+            return schemaStrList;
         }
 
         @Override

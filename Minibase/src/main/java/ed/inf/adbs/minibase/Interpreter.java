@@ -24,6 +24,11 @@ public class Interpreter {
         root = planQuery(query);
     }
 
+    public Interpreter(String databaseDir, Query query) throws Exception {
+        Catalog.INSTANCE.loadCatalog(databaseDir);
+        root = planQuery(query);
+    }
+
     private Operator planQuery(Query query) throws Exception {
         Operator root = null;
 
@@ -55,6 +60,7 @@ public class Interpreter {
                 root = new ProjectOperator(selectOp, rAtom, head);
             }
         } else {
+
             // TODO join
             return null;
         }
