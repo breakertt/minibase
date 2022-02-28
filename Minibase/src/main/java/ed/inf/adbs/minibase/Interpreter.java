@@ -21,17 +21,15 @@ public class Interpreter {
     public Interpreter(String databaseDir, String inputFile) throws Exception {
         Catalog.INSTANCE.loadCatalog(databaseDir);
         query = QueryParser.parse(Paths.get(inputFile));
-        root = planQuery(query);
+        planQuery(query);
     }
 
     public Interpreter(String databaseDir, Query query) throws Exception {
         Catalog.INSTANCE.loadCatalog(databaseDir);
-        root = planQuery(query);
+        planQuery(query);
     }
 
-    private Operator planQuery(Query query) throws Exception {
-        Operator root = null;
-
+    private void planQuery(Query query) throws Exception {
         RelationalAtom head = query.getHead();
         List<Atom> bodyAtoms = query.getBody();
 
@@ -43,29 +41,33 @@ public class Interpreter {
         if (bodyRelationalAtoms.size() == 0) {
             throw new Exception("invalid query");
         } else if (bodyRelationalAtoms.size() == 1) {
-            RelationalAtom rAtom = bodyRelationalAtoms.get(0);
-            Operator scanOp = new ScanOperator(rAtom.getName());
-            boolean requireProjection = !rAtom.getTermStr().equals(head.getTermStr());
-            boolean requireSelectionExplicit = bodyComparisonAtoms.size() >= 1;
-            boolean requireSelectionImplicit = rAtom.getTerms().stream().anyMatch(term -> term instanceof Constant);
-            boolean requireSelection = requireSelectionExplicit || requireSelectionImplicit;
-            if (!requireProjection && !requireSelection) {
-                root = scanOp;
-            } else if (requireProjection && !requireSelection) {
-                root = new ProjectOperator(scanOp, rAtom, head);
-            } else if (!requireProjection && requireSelection) {
-                root = new SelectOperator(scanOp, rAtom, bodyComparisonAtoms);
-            } else if (requireProjection && requireSelection) {
-                Operator selectOp = new SelectOperator(scanOp, rAtom, bodyComparisonAtoms);
-                root = new ProjectOperator(selectOp, rAtom, head);
-            }
+            planSingleRelationQuery(head, bodyRelationalAtoms, bodyComparisonAtoms);
         } else {
-
-            // TODO join
-            return null;
+            planMultipleRelationQuery(head, bodyRelationalAtoms, bodyComparisonAtoms);
         }
+    }
 
-        return root;
+    private void planSingleRelationQuery(RelationalAtom head, List<RelationalAtom> bodyRelationalAtoms, List<ComparisonAtom> bodyComparisonAtoms) throws Exception {
+        RelationalAtom rAtom = bodyRelationalAtoms.get(0);
+        Operator scanOp = new ScanOperator(rAtom.getName());
+        boolean requireProjection = !rAtom.getTermStr().equals(head.getTermStr());
+        boolean requireSelectionExplicit = bodyComparisonAtoms.size() >= 1;
+        boolean requireSelectionImplicit = rAtom.getTerms().stream().anyMatch(term -> term instanceof Constant);
+        boolean requireSelection = requireSelectionExplicit || requireSelectionImplicit;
+        if (!requireProjection && !requireSelection) {
+            root = scanOp;
+        } else if (requireProjection && !requireSelection) {
+            root = new ProjectOperator(scanOp, rAtom, head);
+        } else if (!requireProjection && requireSelection) {
+            root = new SelectOperator(scanOp, rAtom, bodyComparisonAtoms);
+        } else if (requireProjection && requireSelection) {
+            Operator selectOp = new SelectOperator(scanOp, rAtom, bodyComparisonAtoms);
+            root = new ProjectOperator(selectOp, rAtom, head);
+        }
+    }
+
+    private void planMultipleRelationQuery(RelationalAtom head, List<RelationalAtom> bodyRelationalAtoms, List<ComparisonAtom> bodyComparisonAtoms) throws Exception {
+
     }
 
     public void dump(PrintStream ps) {

@@ -13,6 +13,7 @@ public class JoinOperator extends Operator {
     private final Operator child2;
     private final RelationalAtom atom1;
     private final RelationalAtom atom2;
+
     private Tuple tuple1;
     private RelationalAtom atomOutput;
     private List<Integer> reorderList; // atomOutput term pos -> atom1&atom2 term pos
@@ -50,6 +51,10 @@ public class JoinOperator extends Operator {
                 reorderList.add(i + atom1Length);
             }
         }
+    }
+
+    public RelationalAtom getAtomOutput() {
+        return atomOutput;
     }
 
     @Override
