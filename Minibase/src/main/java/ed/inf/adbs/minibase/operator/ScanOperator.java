@@ -7,6 +7,7 @@ import java.io.*;
 
 /**
  * An Operator for reading tuples in a database table
+ * This operator receives a table name, and read the actual file of table by looking up the Catalog singleton.
  */
 public class ScanOperator extends Operator {
 
@@ -22,7 +23,7 @@ public class ScanOperator extends Operator {
     public ScanOperator(String tableName) {
         this.tableName = tableName;
         try {
-            String tablePath = Catalog.INSTANCE.queryTablePath(tableName);
+            String tablePath = Catalog.INSTANCE.queryTablePath(tableName); // retrieve actual file path of table
             if (tablePath == null) {
                 throw new Exception("Table not found in Catalog");
             }
@@ -37,12 +38,12 @@ public class ScanOperator extends Operator {
     public Tuple getNextTuple() {
         String tupleStr = null;
         try {
-            tupleStr = tableBufReader.readLine();
+            tupleStr = tableBufReader.readLine(); // read one line as one tuple in the file
         } catch (IOException e) {
             e.printStackTrace();
         }
         if (tupleStr != null) {
-            return new Tuple(tupleStr, tableName);
+            return new Tuple(tupleStr, tableName); // parse the string of tuple to a Tuple class object
         } else {
             return null;
         }
@@ -51,6 +52,7 @@ public class ScanOperator extends Operator {
     @Override
     public void reset() {
         try {
+            // reset the position of input stream, and initialize a new buffer reader
             tableFileInputStream.getChannel().position(0);
             tableBufReader = new BufferedReader(new InputStreamReader(tableFileInputStream));
         } catch (IOException e) {

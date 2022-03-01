@@ -236,14 +236,12 @@ public class CQMinimizer {
     private static boolean checkTermLevelHomo(RelationalAtom src, RelationalAtom dst, RelationalAtom head) {
         // name mismatch
         if (!src.getName().equals(dst.getName())) return false;
-
+        // extract multiple time used variables
         List<String> headTermStrList = head.getTermStrList();
         List<Term> srcTerms = src.getTerms();
         List<Term> dstTerms = dst.getTerms();
-
-        // term number mismatch
+        // amount of terms mismatch
         if (srcTerms.size() != dstTerms.size()) return false;
-
         // check each term
         for (int i = 0; i < srcTerms.size(); i++) {
             Term srcTerm = srcTerms.get(i);
@@ -260,9 +258,7 @@ public class CQMinimizer {
                     return false;
                 }
             }
-
         }
-
         // pass all checks
         return true;
     }

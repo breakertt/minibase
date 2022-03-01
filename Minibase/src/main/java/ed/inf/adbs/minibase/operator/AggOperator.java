@@ -13,6 +13,9 @@ import java.util.List;
 
 /**
  * An abstract operator for aggregator operations
+ * This abstract operator handles all group by related issues and the aggregator operators with actual functions
+ * only need to rewrite the abstract methods getInitValue(), getAppendValue() and calcValueToInteger() by
+ * choosing appropriate data structure to store intermediate values and calculate final results.
  * @param <T> the type of intermedia values while grouping
  */
 public abstract class AggOperator<T> extends Operator {
@@ -75,8 +78,10 @@ public abstract class AggOperator<T> extends Operator {
         }
         // processing the vales stored for each group and produce tuples
         List<Tuple> tupleList = new ArrayList<>();
+        // iterate over the value map
         for (HashMap.Entry<String, T> entry : valueMap.entrySet()) {
-            Tuple oldTuple = tupleMap.get(entry.getKey());
+            Tuple oldTuple = tupleMap.get(entry.getKey()); // get the example tuple from the tuple map
+            // change the item on agg var pos to a new item with value after agg func
             ArrayList<Item> tupleItems = new ArrayList<>(oldTuple.getItems());
             tupleItems.remove(aggTermPos);
             tupleItems.add(aggTermPos, Item.itemBuilder(calcValueToInteger(entry.getValue())));
