@@ -1,7 +1,5 @@
 package ed.inf.adbs.minibase.datamodel;
 
-import java.util.Objects;
-
 public class ItemString extends Item {
     public final String s;
 

@@ -11,7 +11,7 @@ import java.util.List;
 public class ProjectOperator extends Operator {
 
     private final Operator child;
-    private HashSet<String> tupleRecord;
+    private final HashSet<String> tupleRecord;
     private Integer[] reorderArray; // head term pos -> input term pos
 
     public ProjectOperator(Operator child, RelationalAtom input, RelationalAtom output) throws Exception {
@@ -41,7 +41,7 @@ public class ProjectOperator extends Operator {
 
     @Override
     public Tuple getNextTuple() {
-        Tuple tuple = null;
+        Tuple tuple;
         while ((tuple = child.getNextTuple()) != null) {
             Tuple projectedTuple = new Tuple(tuple, reorderArray);
             String projectedTupleStr = projectedTuple.toString();

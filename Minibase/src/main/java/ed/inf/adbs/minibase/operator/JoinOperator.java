@@ -98,5 +98,4 @@ public class JoinOperator extends Operator {
                 "\n}";
     }
 
-
 }

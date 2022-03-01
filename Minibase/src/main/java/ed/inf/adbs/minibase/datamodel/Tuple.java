@@ -3,8 +3,6 @@ package ed.inf.adbs.minibase.datamodel;
 import ed.inf.adbs.minibase.Utils;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 
 public class Tuple {
     private final String tableName;
