@@ -50,19 +50,16 @@ public class QueryParser {
                     .map(a -> a.accept(atomVisitor))
                     .collect(toList());
 
-
-            //
-            // TODO: construct SUM & AVG aggregate atoms
-            //
-
             // Check if SUM exists
+            SumVariableVisitor sumVariableVisitor = new SumVariableVisitor();
             if (ctx.head().sumagg() != null) {
-                headVariables.add(new SumVariable(ctx.head().sumagg().variable().getText()));
+                headVariables.add(ctx.head().sumagg().accept(sumVariableVisitor));
             }
 
             // Check if AVG exists
+            AvgVariableVisitor avgVariableVisitor = new AvgVariableVisitor();
             if (ctx.head().avgagg() != null) {
-                headVariables.add(new AvgVariable(ctx.head().avgagg().variable().getText()));
+                headVariables.add(ctx.head().avgagg().accept(avgVariableVisitor));
             }
 
             return new Query(head, body);
@@ -124,6 +121,22 @@ public class QueryParser {
         public Variable visitVariable(MinibaseParser.VariableContext ctx) {
             String variableName = ctx.ID_LOWER().getText();
             return new Variable(variableName);
+        }
+    }
+
+    private static class AvgVariableVisitor extends MinibaseBaseVisitor<AvgVariable> {
+        @Override
+        public AvgVariable visitAvgagg(MinibaseParser.AvgaggContext ctx) {
+            String variableName = ctx.variable().getText();
+            return new AvgVariable(variableName);
+        }
+    }
+
+    private static class SumVariableVisitor extends MinibaseBaseVisitor<SumVariable> {
+        @Override
+        public SumVariable visitSumagg(MinibaseParser.SumaggContext ctx) {
+            String variableName = ctx.variable().getText();
+            return new SumVariable(variableName);
         }
     }
 
