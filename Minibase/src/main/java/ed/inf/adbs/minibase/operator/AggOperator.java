@@ -60,19 +60,21 @@ public abstract class AggOperator<T> extends Operator {
     }
 
     /**
-     *
-     * @param childTupleList
-     * @return
+     * Calculate group by and aggregation functions
+     * @param childTupleList tuples from child operators
+     * @return tuples after applying group by and agg functions
      */
     private List<Tuple> groupBy(List<Tuple> childTupleList) {
-        HashMap<String, T> valueMap = new HashMap<>();
-        HashMap<String, Tuple> tupleMap = new HashMap<>();
+        // grouping by the tuples from child operators
+        HashMap<String, T> valueMap = new HashMap<>(); // the hashmap for storing the aggregator values
+        HashMap<String, Tuple> tupleMap = new HashMap<>(); // the hashmap for storing the tuple examples
         for (Tuple childTuple: childTupleList) {
-            Tuple headTuple = new Tuple(childTuple, reorderArray);
-            String key = getGroupKey(headTuple);
-            updateValueMap(valueMap, key, headTuple.getItems().get(aggTermPos));
-            updateTupleMap(tupleMap, key, headTuple);
+            Tuple headTuple = new Tuple(childTuple, reorderArray); // delete non-aggregated and non-groupby variables
+            String key = getGroupKey(headTuple); // the group
+            updateValueMap(valueMap, key, headTuple.getItems().get(aggTermPos)); // add value to the group
+            updateTupleMap(tupleMap, key, headTuple); // store a tuple example for the group
         }
+        // processing the vales stored for each group and produce tuples
         List<Tuple> tupleList = new ArrayList<>();
         for (HashMap.Entry<String, T> entry : valueMap.entrySet()) {
             Tuple oldTuple = tupleMap.get(entry.getKey());
@@ -85,18 +87,35 @@ public abstract class AggOperator<T> extends Operator {
         return tupleList;
     }
 
+    /**
+     * Generate the string of a tuple with grouping variables only
+     * @param tuple tuple for generating the group key
+     * @return a string as the indicator of group
+     */
     private String getGroupKey(Tuple tuple) {
         List<Item> items = Utils.cloneList(tuple.getItems());
         items.remove(aggTermPos);
         return Utils.join(items, ",");
     }
 
+    /**
+     * Store a example tuple for each group key
+     * @param tupleMap the hashmap for storing the tuple examples
+     * @param key group key
+     * @param childTuple example tuple to be stored
+     */
     private void updateTupleMap(HashMap<String, Tuple> tupleMap, String key, Tuple childTuple) {
         if (!tupleMap.containsKey(key)) {
             tupleMap.put(key, childTuple);
         }
     }
 
+    /**
+     * Store all intermediate values for computing aggregator functions
+     * @param valueMap the hashmap for storing the aggregator values
+     * @param key group key
+     * @param item the item containing value to be calculated with agg function
+     */
     private void updateValueMap(HashMap<String, T> valueMap, String key, Item item) {
         if (!valueMap.containsKey(key)) {
             valueMap.put(key, getInitValue(item));
@@ -106,22 +125,38 @@ public abstract class AggOperator<T> extends Operator {
         }
     }
 
+    /**
+     * The behavior when first item is recorded
+     * @param item the item containing value to be calculated with agg function
+     * @return an updated intermediate values in a specific data structure
+     */
     abstract protected T getInitValue(Item item);
 
+    /**
+     * The behavior when more item is added into the intermediate values
+     * @param item the item containing value to be calculated with agg function
+     * @return an updated intermediate values in a specific data structure
+     */
     abstract protected T getAppendValue(T t, Item item);
 
+    /**
+     * Transform intermediate values into one single integer
+     * @param t intermediate values in a specific data structure
+     * @return the integer value after agg function
+     */
     abstract protected Integer calcValueToInteger(T t);
 
     @Override
     public Tuple getNextTuple() {
         if (!isLoaded) {
-            List<Tuple> childTupleList = child.dump();
-            tupleList = groupBy(childTupleList);
-            isLoaded = true;
+            List<Tuple> childTupleList = child.dump(); // requests all tuples that child can produces
+            tupleList = groupBy(childTupleList); // calculate aggregations and store into tupleList
+            isLoaded = true; // no reload from child in future
         }
-        if (tupleList.size() == tupleListPointer) {
+        if (tupleList.size() == tupleListPointer) { // all tuples are returned
             return null;
         } else {
+            // return next tuple, move the pointer
             Tuple tuple = tupleList.get(tupleListPointer);
             tupleListPointer++;
             return tuple;
