@@ -13,17 +13,12 @@ import java.util.stream.Collectors;
 
 public class Interpreter {
 
-    Operator root;
-    Query query;
+    private Operator root;
+    private final Query query;
 
     public Interpreter(String databaseDir, String inputFile) throws Exception {
         Catalog.INSTANCE.loadCatalog(databaseDir);
         query = QueryParser.parse(Paths.get(inputFile));
-        planQuery(query);
-    }
-
-    public Interpreter(String databaseDir, Query query) throws Exception {
-        Catalog.INSTANCE.loadCatalog(databaseDir);
         planQuery(query);
     }
 
@@ -90,6 +85,7 @@ public class Interpreter {
         if (!atomBodyOutput.getTermStr().equals(head.getTermStr())) {
             root = new ProjectOperator(root, atomBodyOutput, head);
         }
+//        System.out.println(root);
     }
 
     private List<ComparisonAtom> getIndividualComparisonAtoms(List<ComparisonAtom> bodyComparisonAtoms, RelationalAtom rAtom) {
@@ -141,4 +137,9 @@ public class Interpreter {
     public void dump(PrintStream ps) {
         root.dump(ps);
     }
+
+    public Operator getRoot() {
+        return root;
+    }
+
 }

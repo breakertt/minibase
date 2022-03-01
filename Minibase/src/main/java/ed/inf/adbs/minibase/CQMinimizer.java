@@ -196,7 +196,7 @@ public class CQMinimizer {
      * for terms, variable to constant, variable to variable, constant x to constant x is allowed
      * no constant to variable or constant x to constant y or map distinguish variable to other is allowed
      *
-     * @param src an atom to be transform
+     * @param src an atom to be transformed
      * @param dst an atom for src to transform to
      * @param head head atom of the cq containing distinguish variables
      * @return a boolean indicating whether the basic homo can be built between src and dst

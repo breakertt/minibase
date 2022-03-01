@@ -4,6 +4,7 @@ import ed.inf.adbs.minibase.base.RelationalAtom;
 import ed.inf.adbs.minibase.base.Term;
 import ed.inf.adbs.minibase.datamodel.Tuple;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 
@@ -55,5 +56,13 @@ public class ProjectOperator extends Operator {
     @Override
     public void reset() {
         child.reset();
+    }
+
+    @Override
+    public String toString() {
+        return "ProjectOperator{" +
+                "child=" + child +
+                ", reorderArray=" + Arrays.toString(reorderArray) +
+                '}';
     }
 }

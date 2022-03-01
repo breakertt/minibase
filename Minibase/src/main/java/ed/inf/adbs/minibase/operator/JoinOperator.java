@@ -12,19 +12,15 @@ public class JoinOperator extends Operator {
 
     private final Operator child1;
     private final Operator child2;
-    private final RelationalAtom atom1;
-    private final RelationalAtom atom2;
 
     private Tuple tuple1;
     private RelationalAtom atomOutput;
-    private List<Integer> reorderList; // atomOutput term pos -> atom1&atom2 term pos
-    private List<Pair> equalPairList;
+    private final List<Integer> reorderList; // atomOutput term pos -> atom1&atom2 term pos
+    private final List<Pair> equalPairList;
 
     public JoinOperator(Operator child1, Operator child2, RelationalAtom atom1, RelationalAtom atom2) {
         this.child1 = child1;
         this.child2 = child2;
-        this.atom1 = atom1;
-        this.atom2 = atom2;
         this.reorderList = new ArrayList<>();
         this.equalPairList = new ArrayList<>();
         analysisJoin(atom1, atom2);
@@ -96,10 +92,10 @@ public class JoinOperator extends Operator {
 
     @Override
     public String toString() {
-        return "JoinOperator{" +
+        return "JoinOperator{\n" +
                 "child1=" + child1 +
-                ", child2=" + child2 +
-                '}';
+                ", \nchild2=" + child2 +
+                "\n}";
     }
 
 

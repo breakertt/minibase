@@ -20,7 +20,7 @@ public class SelectOperator extends Operator {
         this.child = child; // one scan child
         this.cAtomList = cAtomList;
         this.rAtomBody = rAtom.getTerms();
-        this.variablePosMap = new HashMap<String, Integer>();
+        this.variablePosMap = new HashMap<>();
         this.constantTermPosList = new ArrayList<>();
         analysisSelect();
     }
@@ -91,7 +91,7 @@ public class SelectOperator extends Operator {
 
     @Override
     public Tuple getNextTuple() {
-        Tuple tuple = null;
+        Tuple tuple;
         while ((tuple = child.getNextTuple()) != null) {
             if (explicitRulesCheck(tuple) && implicitRulesCheck(tuple)) return tuple;
         }
@@ -105,9 +105,9 @@ public class SelectOperator extends Operator {
 
     @Override
     public String toString() {
-        return "SelectOperator{" +
+        return "SelectOperator{\n" +
                 "child=" + child +
                 ", cAtomList=" + cAtomList +
-                '}';
+                "\n}";
     }
 }
