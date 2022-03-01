@@ -115,12 +115,8 @@ public class CQMinimizer {
         return new Query(head, body);
     }
 
-    private static <T> List<T> cloneList(List<T> list) {
-        return new ArrayList<>(list);
-    }
-
     private static List<Atom> removeAtom(List<Atom> body, int atomPos) {
-        List<Atom> newBody = cloneList(body);
+        List<Atom> newBody = Utils.cloneList(body);
         newBody.remove(atomPos);
         return newBody;
     }
@@ -140,7 +136,7 @@ public class CQMinimizer {
             if (homoMapping == null) continue; // build homo failed
             // remove another atom with previous homo mapping and new built one
             List<Atom> tmpBody = removeAtom(body, 0);
-            List<HashMap<String, Term>> tmpPartialHomos = cloneList(partialHomos);
+            List<HashMap<String, Term>> tmpPartialHomos = Utils.cloneList(partialHomos);
             if (homoMapping.size() > 0) tmpPartialHomos.add(homoMapping);
             if (buildHomo(tmpBody, newBody, head, tmpPartialHomos)) return true;
         }

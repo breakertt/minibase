@@ -38,26 +38,8 @@ public class Interpreter {
         }
     }
 
-//    private void planSingleRelationQuery(RelationalAtom head, List<RelationalAtom> bodyRelationalAtoms, List<ComparisonAtom> bodyComparisonAtoms) throws Exception {
-//        RelationalAtom rAtom = bodyRelationalAtoms.get(0);
-//        Operator scanOp = new ScanOperator(rAtom.getName());
-//        boolean requireProjection = !rAtom.getTermStr().equals(head.getTermStr());
-//        boolean requireSelectionExplicit = bodyComparisonAtoms.size() >= 1;
-//        boolean requireSelectionImplicit = rAtom.getTerms().stream().anyMatch(term -> term instanceof Constant);
-//        boolean requireSelection = requireSelectionExplicit || requireSelectionImplicit;
-//        if (!requireProjection && !requireSelection) {
-//            root = scanOp;
-//        } else if (requireProjection && !requireSelection) {
-//            root = new ProjectOperator(scanOp, rAtom, head);
-//        } else if (!requireProjection && requireSelection) {
-//            root = new SelectOperator(scanOp, rAtom, bodyComparisonAtoms);
-//        } else if (requireProjection && requireSelection) {
-//            Operator selectOp = new SelectOperator(scanOp, rAtom, bodyComparisonAtoms);
-//            root = new ProjectOperator(selectOp, rAtom, head);
-//        }
-//    }
-
     private void planRelationQuery(RelationalAtom head, List<RelationalAtom> bodyRelationalAtoms, List<ComparisonAtom> bodyComparisonAtoms) throws Exception {
+        // scan & select within atom
         List<Operator> baseOperators = new ArrayList<>(bodyComparisonAtoms.size());
         for (RelationalAtom rAtom : bodyRelationalAtoms) {
             boolean requireSelectionImplicit = rAtom.getTerms().stream().anyMatch(term -> term instanceof Constant);
@@ -69,7 +51,7 @@ public class Interpreter {
             }
             baseOperators.add(baseRoot);
         }
-        // join
+        // join & select cross atoms
         root = baseOperators.get(0);
         RelationalAtom atomBodyOutput = bodyRelationalAtoms.get(0);
         for (int i = 1; i < baseOperators.size(); i++) {
@@ -81,11 +63,25 @@ public class Interpreter {
                 root = new SelectOperator(root, atomBodyOutput, crossRelationComparisonAtoms);
             }
         }
-        // project
-        if (!atomBodyOutput.getTermStr().equals(head.getTermStr())) {
-            root = new ProjectOperator(root, atomBodyOutput, head);
+        // aggregate
+        int i;
+        for (i = 0; i < head.getTerms().size(); i++) {
+            Term term = head.getTerms().get(i);
+            if (term instanceof AvgVariable) {
+                root = new AvgOperator(root, atomBodyOutput, head);
+                break;
+            }
+            if (term instanceof SumVariable) {
+                root = new SumOperator(root, atomBodyOutput, head);
+                break;
+            }
         }
-//        System.out.println(root);
+        // no aggregate then project
+        if (i == head.getTerms().size()) {
+            if (!atomBodyOutput.getTermStr().equals(head.getTermStr())) {
+                root = new ProjectOperator(root, atomBodyOutput, head);
+            }
+        }
     }
 
     private List<ComparisonAtom> getIndividualComparisonAtoms(List<ComparisonAtom> bodyComparisonAtoms, RelationalAtom rAtom) {

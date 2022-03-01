@@ -13,6 +13,11 @@ public class Tuple {
         this.items = parseTupleStr(tupleStr);
     }
 
+    public Tuple(String tableName, ArrayList<Item> items) {
+        this.tableName = tableName;
+        this.items = items;
+    }
+
     public Tuple(Tuple oldTuple, Integer[] reorderArray) {
         this.tableName = oldTuple.tableName;
         this.items = reorderTupleItems(oldTuple.getItems(), reorderArray);

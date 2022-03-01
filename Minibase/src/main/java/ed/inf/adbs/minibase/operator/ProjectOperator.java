@@ -1,5 +1,6 @@
 package ed.inf.adbs.minibase.operator;
 
+import ed.inf.adbs.minibase.Utils;
 import ed.inf.adbs.minibase.base.RelationalAtom;
 import ed.inf.adbs.minibase.base.Term;
 import ed.inf.adbs.minibase.datamodel.Tuple;
@@ -21,22 +22,7 @@ public class ProjectOperator extends Operator {
     }
 
     private void analysisProject(RelationalAtom input, RelationalAtom output) throws Exception {
-        List<Term> outputTerms = output.getTerms();
-        reorderArray = new Integer[outputTerms.size()];
-        List<String> inputTermStrList = input.getTermStrList();
-        for (int i = 0; i < outputTerms.size(); i++) {
-            String outputTermStr = outputTerms.get(i).toString();
-            int j;
-            for (j = 0; j < inputTermStrList.size(); j++) {
-                if (inputTermStrList.get(j).equals(outputTermStr)) {
-                    reorderArray[i] = j;
-                    break;
-                }
-            }
-            if (j == inputTermStrList.size()) {
-                throw new Exception("head variable not in body");
-            }
-        }
+        reorderArray = Utils.genAtomPosMap(input, output);
     }
 
     @Override
