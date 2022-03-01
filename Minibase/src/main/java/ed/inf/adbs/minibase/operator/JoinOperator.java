@@ -26,8 +26,8 @@ public class JoinOperator extends Operator {
         analysisJoin(atom1, atom2);
     }
 
+    // find the output schema & the implicit equality
     private void analysisJoin(RelationalAtom atom1, RelationalAtom atom2) {
-        // find the output schema & the implicit equality
         List<Term> atomOutputTerms = new ArrayList<>();
         atomOutput = new RelationalAtom(atom1.getName() + "_JOIN_" + atom2.getName(), atomOutputTerms);
         List<Term> atom1Terms = atom1.getTerms();
@@ -54,6 +54,16 @@ public class JoinOperator extends Operator {
         return atomOutput;
     }
 
+    private boolean checkEqualOnVariables(Tuple tuple1, Tuple tuple2, List<Pair> equalPairList) {
+        boolean isEqualOnVariables = true;
+        for (Pair pair: equalPairList) {
+            Comparable item1Val = tuple1.getItems().get(pair.a).getValue();
+            Comparable item2Val = tuple2.getItems().get(pair.b).getValue();
+            isEqualOnVariables = isEqualOnVariables && (item1Val.compareTo(item2Val) == 0);
+        }
+        return isEqualOnVariables;
+    }
+
     @Override
     public Tuple getNextTuple() {
         while (true) {
@@ -72,13 +82,7 @@ public class JoinOperator extends Operator {
                     return null;
                 }
             }
-            boolean isEqualOnVariables = true;
-            for (Pair pair: equalPairList) {
-                Comparable item1Val = tuple1.getItems().get(pair.a).getValue();
-                Comparable item2Val = tuple2.getItems().get(pair.b).getValue();
-                isEqualOnVariables = isEqualOnVariables && (item1Val.compareTo(item2Val) == 0);
-            }
-            if (isEqualOnVariables) {
+            if (checkEqualOnVariables(tuple1, tuple2, equalPairList)) {
                 return new Tuple(tuple1, tuple2, atomOutput.getName(), reorderList.toArray(new Integer[0]));
             }
         }

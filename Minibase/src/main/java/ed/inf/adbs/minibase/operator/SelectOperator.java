@@ -48,8 +48,6 @@ public class SelectOperator extends Operator {
             Comparable comparable2 = extractOrMatchValueForTerm(cAtom.getTerm2(), tuple);
             if (!compareCheck(comparable1.compareTo(comparable2), cAtom.getOp())) return false;
         }
-
-
         return true;
     }
 

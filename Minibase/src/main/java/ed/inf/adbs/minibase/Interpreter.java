@@ -40,6 +40,18 @@ public class Interpreter {
 
     private void planRelationQuery(RelationalAtom head, List<RelationalAtom> bodyRelationalAtoms, List<ComparisonAtom> bodyComparisonAtoms) throws Exception {
         // scan & select within atom
+        List<Operator> baseOperators = buildBaseOperators(bodyRelationalAtoms, bodyComparisonAtoms);
+        // join & select cross atoms
+        RelationalAtom atomBodyOutput = buildJoinTreeRoot(bodyRelationalAtoms, bodyComparisonAtoms, baseOperators);
+        // finalization with aggregation or projection
+        boolean isAggQuery = buildAggregationRoot(head, atomBodyOutput);
+        // no aggregate then project
+        if (!isAggQuery) {
+            buildProjectionRoot(head, atomBodyOutput);
+        }
+    }
+
+    private List<Operator> buildBaseOperators(List<RelationalAtom> bodyRelationalAtoms, List<ComparisonAtom> bodyComparisonAtoms) {
         List<Operator> baseOperators = new ArrayList<>(bodyComparisonAtoms.size());
         for (RelationalAtom rAtom : bodyRelationalAtoms) {
             boolean requireSelectionImplicit = rAtom.getTerms().stream().anyMatch(term -> term instanceof Constant);
@@ -51,7 +63,10 @@ public class Interpreter {
             }
             baseOperators.add(baseRoot);
         }
-        // join & select cross atoms
+        return baseOperators;
+    }
+
+    private RelationalAtom buildJoinTreeRoot(List<RelationalAtom> bodyRelationalAtoms, List<ComparisonAtom> bodyComparisonAtoms, List<Operator> baseOperators) {
         root = baseOperators.get(0);
         RelationalAtom atomBodyOutput = bodyRelationalAtoms.get(0);
         for (int i = 1; i < baseOperators.size(); i++) {
@@ -63,25 +78,28 @@ public class Interpreter {
                 root = new SelectOperator(root, atomBodyOutput, crossRelationComparisonAtoms);
             }
         }
-        // aggregate
-        int i;
-        for (i = 0; i < head.getTerms().size(); i++) {
-            Term term = head.getTerms().get(i);
-            if (term instanceof AvgVariable) {
-                root = new AvgOperator(root, atomBodyOutput, head);
-                break;
-            }
-            if (term instanceof SumVariable) {
-                root = new SumOperator(root, atomBodyOutput, head);
-                break;
-            }
+        return atomBodyOutput;
+    }
+
+    private boolean buildAggregationRoot(RelationalAtom head, RelationalAtom atomBodyOutput) throws Exception {
+        Term lastTerm = head.getTerms().get(head.getTerms().size() - 1);
+        if (lastTerm instanceof AvgVariable) {
+            root = new AvgOperator(root, atomBodyOutput, head);
+            return true;
         }
-        // no aggregate then project
-        if (i == head.getTerms().size()) {
-            if (!atomBodyOutput.getTermStr().equals(head.getTermStr())) {
-                root = new ProjectOperator(root, atomBodyOutput, head);
-            }
+        if (lastTerm instanceof SumVariable) {
+            root = new SumOperator(root, atomBodyOutput, head);
+            return true;
         }
+        return false;
+    }
+
+    private boolean buildProjectionRoot(RelationalAtom head, RelationalAtom atomBodyOutput) throws Exception {
+        if (!atomBodyOutput.getTermStr().equals(head.getTermStr())) {
+            root = new ProjectOperator(root, atomBodyOutput, head);
+            return true;
+        }
+        return false;
     }
 
     private List<ComparisonAtom> getIndividualComparisonAtoms(List<ComparisonAtom> bodyComparisonAtoms, RelationalAtom rAtom) {

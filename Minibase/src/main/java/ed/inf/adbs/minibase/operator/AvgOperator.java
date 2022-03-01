@@ -11,46 +11,25 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-public class AvgOperator extends AggOperator {
+public class AvgOperator extends AggOperator<Pair> {
 
     public AvgOperator(Operator child, RelationalAtom body, RelationalAtom head) throws Exception {
         super(child, body, head);
     }
 
-    protected List<Tuple> groupBy(List<Tuple> childTupleList) {
-        HashMap<String, Pair> valueMap = new HashMap<>();
-        HashMap<String, Tuple> tupleMap = new HashMap<>();
-        for (Tuple childTuple: childTupleList) {
-            Tuple headTuple = new Tuple(childTuple, reorderArray);
-            String key = genGroupKey(headTuple);
-            updateValue(valueMap, key, headTuple.getItems().get(aggTermPos));
-            updateTuple(tupleMap, key, headTuple);
-        }
-        List<Tuple> tupleList = new ArrayList<>();
-        for (HashMap.Entry<String, Pair> entry : valueMap.entrySet()) {
-            Tuple oldTuple = tupleMap.get(entry.getKey());
-            ArrayList<Item> tupleItems = new ArrayList<>(oldTuple.getItems());
-            double avg = (double) entry.getValue().a / (double) entry.getValue().b;
-            tupleItems.remove(aggTermPos);
-            tupleItems.add(aggTermPos, new ItemInteger((int) Math.round(avg)));
-            Tuple tuple = new Tuple(oldTuple.getTableName(), tupleItems);
-            tupleList.add(tuple);
-        }
-        return tupleList;
+    @Override
+    protected Pair getInitValue(Item item) {
+        return new Pair((Integer) item.getValue(), 1);
     }
 
-    private void updateTuple(HashMap<String, Tuple> tupleMap, String key, Tuple childTuple) {
-        if (!tupleMap.containsKey(key)) {
-            tupleMap.put(key, childTuple);
-        }
+    @Override
+    protected Pair getAppendValue(Pair pair, Item item) {
+        return new Pair((Integer) item.getValue() + pair.a, 1 + pair.b);
     }
 
-    private void updateValue(HashMap<String, Pair> valueMap, String key, Item item) {
-        if (valueMap.containsKey(key)) {
-            Pair pair = valueMap.get(key);
-            valueMap.put(key, new Pair((Integer) item.getValue() + pair.a, 1 + pair.b));
-        } else {
-            valueMap.put(key, new Pair((Integer) item.getValue(), 1));
-        }
+    @Override
+    protected Integer calcValueToInteger(Pair pair) {
+        double avg = (double) pair.a / (double) pair.b;
+        return (int) Math.round(avg);
     }
 }
