@@ -2,12 +2,10 @@ package ed.inf.adbs.minibase.operator;
 
 import ed.inf.adbs.minibase.Utils;
 import ed.inf.adbs.minibase.base.RelationalAtom;
-import ed.inf.adbs.minibase.base.Term;
 import ed.inf.adbs.minibase.datamodel.Tuple;
 
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 
 public class ProjectOperator extends Operator {
 

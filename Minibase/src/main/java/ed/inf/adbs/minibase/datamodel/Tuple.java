@@ -74,7 +74,6 @@ public class Tuple {
 
     @Override
     public java.lang.String toString() {
-//        return rawStr;
         return Utils.join(items, ", ");
     }
 

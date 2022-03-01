@@ -5,7 +5,6 @@ import ed.inf.adbs.minibase.base.AggVariable;
 import ed.inf.adbs.minibase.base.RelationalAtom;
 import ed.inf.adbs.minibase.base.Term;
 import ed.inf.adbs.minibase.datamodel.Item;
-import ed.inf.adbs.minibase.datamodel.ItemInteger;
 import ed.inf.adbs.minibase.datamodel.Tuple;
 
 import java.util.ArrayList;

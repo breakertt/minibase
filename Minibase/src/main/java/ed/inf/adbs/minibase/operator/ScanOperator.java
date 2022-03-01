@@ -1,16 +1,24 @@
 package ed.inf.adbs.minibase.operator;
 
-
 import ed.inf.adbs.minibase.datamodel.Catalog;
 import ed.inf.adbs.minibase.datamodel.Tuple;
 
 import java.io.*;
 
+/**
+ * An Operator for reading tuples in a database table
+ */
 public class ScanOperator extends Operator {
+
     private final String tableName;
     private FileInputStream tableFileInputStream;
     private BufferedReader tableBufReader;
 
+    /**
+     * Constructor for scan operator
+     * retrieve the filename of given table name, open the table file
+     * @param tableName table to scan
+     */
     public ScanOperator(String tableName) {
         this.tableName = tableName;
         try {
