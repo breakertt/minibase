@@ -32,9 +32,9 @@ public class CQMinimizer {
 
     /**
      * Pipeline for CQMinimizer
-     *
      * Parse input, minimize query, then write minimized query to output
-     *
+     * @param inputFile the input file containing original query
+     * @param outputFile the output file to write minimized query
      */
     public static void cqMinimizerPipe(String inputFile, String outputFile) {
         // parse query string
@@ -47,6 +47,11 @@ public class CQMinimizer {
         writeCq(minimizedQuery, outputFile);
     }
 
+    /**
+     * Read and parse a query from provided file
+     * @param inputFile the input file containing original query
+     * @return the query to be minimized
+     */
     private static Query readCq(String inputFile) {
         Query query = null;
         try {
@@ -60,6 +65,11 @@ public class CQMinimizer {
         return query;
     }
 
+    /**
+     * Write a query into provided file
+     * @param query  a query
+     * @param outputFile the file to be written to
+     */
     private static void writeCq(Query query, String outputFile) {
         try{
             File file = new File(outputFile);
@@ -78,34 +88,29 @@ public class CQMinimizer {
     }
 
     /**
-     * CQ minimization procedure
-     *
-     * Assume the body of the query from inputFile has no comparison atoms
-     * but could potentially have constants in its relational atoms.
-     *
-     * Iteratively find atom to remove
-     *
+     * Main CQ minimization procedure
+     * Try to remove one atom from the query, then build a homomorphism from Q to Q/{a}
+     * @param query the query to be minimized
+     * @return a minimized query
      */
     public static Query minimizeCq(Query query) {
         RelationalAtom head = query.getHead();
         List<Atom> body = query.getBody();
-
-
-        // Remove one, try build a homomorphism from original one to one removed
         boolean isRemoved = true;
+        // stop until no atom can be removed
         while (isRemoved) {
             isRemoved = false;
+            // try to remove one atom
             for (int i = 0; i < body.size(); i++) {
+                // Q/{a}
                 List<Atom> newBody = removeAtom(body, i);
-                // give the atom be removed the highest priority
+                // naive tree-pruning - let the atom to be removed be mapped first
                 List<Atom> tmpBody = removeAtom(body, i);
                 tmpBody.add(0, body.get(i));
-                System.out.println("Initial Body: " + tmpBody);
-                boolean success = buildHomo(body, newBody, head, new ArrayList<>());
+                // try build homo from Q -> Q/{a}
+                boolean success = buildHomo(tmpBody, newBody, head, new ArrayList<>());
                 if (success) {
-                    System.out.println("Remove Atom : " + body.get(i) + " at Position " + i);
-                    body = newBody;
-                    System.out.println("New Body : " + body);
+                    body = newBody; // Q is minimized to Q/{a}
                     isRemoved = true;
                     break;
                 }
@@ -115,45 +120,73 @@ public class CQMinimizer {
         return new Query(head, body);
     }
 
+    /**
+     * Remove one atom in a list of atoms with given position
+     * @param body a list of atoms
+     * @param atomPos the pos of atom to be removed
+     * @return a new list of atoms which one atom is removed
+     */
     private static List<Atom> removeAtom(List<Atom> body, int atomPos) {
         List<Atom> newBody = Utils.cloneList(body);
         newBody.remove(atomPos);
         return newBody;
     }
 
+    /**
+     * Build a homomorphism with a Depth-First-Search like algorithm
+     * @param body query body of the atoms in this list will be eliminated entirely to build a homomorphism
+     * @param newBody query body of the atoms which can be mapped to with one atom removed (i.e. Q/{a})
+     * @param head head of query
+     * @param partialHomos a list of partial homomorphism mappings, which indicates a full homo if the body is empty
+     * @return whether a homo can be built between body to newBody
+     */
     private static boolean buildHomo(List<Atom> body, List<Atom> newBody, RelationalAtom head, List<HashMap<String, Term>> partialHomos ) {
+        // a homo is built, as all atoms in the old body are eliminated
         if (body.size() == 0) {
-            System.out.println("Q -> Q/{a} Homomorphism: " + partialHomos);
             return true;
         }
+        // the first atom in the body is going to be eliminated, as all atoms will be eliminated soon or later
         RelationalAtom atomToEliminate = (RelationalAtom) body.get(0);
         for (int i = 0; i < newBody.size(); i++) {
+            // find another atom in Q/{a}, which atomToEliminate will be mapped to
             RelationalAtom atomCandidateTransform = (RelationalAtom) newBody.get(i);
-            // term-level checks
+            // basic term-level checks to show
+            // whether a mapping from atomToEliminate to atomCandidateTransform is feasible
             if (!checkTermLevelHomo(atomToEliminate, atomCandidateTransform, head)) continue;
-            // build partial homomorphism mapping
+            // build partial homomorphism mapping between two given atoms, with previous built partial homo mapping
             HashMap<String, Term> homoMapping = buildTermLevelHomo(atomToEliminate, atomCandidateTransform, partialHomos);
             if (homoMapping == null) continue; // build homo failed
-            // remove another atom with previous homo mapping and new built one
+            // a partial homo mapping which does not violate previous mappings is built, the atom can be removed, and
+            // the new partial mapping is added
             List<Atom> tmpBody = removeAtom(body, 0);
             List<HashMap<String, Term>> tmpPartialHomos = Utils.cloneList(partialHomos);
             if (homoMapping.size() > 0) tmpPartialHomos.add(homoMapping);
+            // continue build further homo mappings - go deep
             if (buildHomo(tmpBody, newBody, head, tmpPartialHomos)) return true;
         }
+        // if no further mappings can be built, stop and backtrace
         return false;
     }
 
+    /**
+     * build a term level homo from one atom to another atom, without violating the given current homo mapping
+     * @param src atom to transform
+     * @param dst atom for transform to
+     * @param partialHomos previous homo mappings which this homo should follow
+     * @return a new partial homo mapping
+     */
     private static HashMap<String, Term> buildTermLevelHomo(RelationalAtom src, RelationalAtom dst, List<HashMap<String, Term>> partialHomos) {
         List<Term> srcTerms = src.getTerms();
         List<Term> dstTerms = dst.getTerms();
-
         HashMap<String, Term> localHomo = new HashMap<>();
         int i;
+        // compare all the terms
         for (i = 0; i < srcTerms.size(); i++) {
             Term keyTerm = srcTerms.get(i);
             Term value = dstTerms.get(i);
             String key = srcTerms.get(i).toString();
             String valueStr = dstTerms.get(i).toString();
+            // two terms are both constant, if equal then skip, if not equal then fail
             if (keyTerm instanceof Constant && value instanceof Constant) {
                 if (key.equals(valueStr)) {
                     continue;
@@ -162,6 +195,7 @@ public class CQMinimizer {
                 }
             }
             boolean isKeyExist = false;
+            // apply previous homo mappings, fail if the being inconsistent and skip for duplicate
             for (HashMap<String, Term> partialHomo: partialHomos) {
                 if (partialHomo.containsKey(key)) {
                     if (!partialHomo.get(key).toString().equals(valueStr)) {
@@ -172,6 +206,7 @@ public class CQMinimizer {
                 }
             }
             if (isKeyExist) continue;
+            // check one-to-many violations and skip the duplicate
             if (localHomo.containsKey(key)) {
                 if (!localHomo.get(key).toString().equals(valueStr)) {
                     return null;
@@ -180,6 +215,7 @@ public class CQMinimizer {
                 }
             }
             if (isKeyExist) continue;
+            // add new homo
             localHomo.put(key, value);
         }
         return localHomo;

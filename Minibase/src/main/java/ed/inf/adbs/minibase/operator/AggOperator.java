@@ -12,18 +12,28 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+/**
+ * An abstract operator for aggregator operations
+ * @param <T> the type of intermedia values while grouping
+ */
 public abstract class AggOperator<T> extends Operator {
 
     Operator child;
 
-    int aggTermPos;
-    Integer[] reorderArray;
+    int aggTermPos; // the position of aggregator in query head
+    Integer[] reorderArray; // an array which records the pos of head atom variables in the body atom (maybe after join)
 
-    boolean isLoaded;
-    List<Tuple> tupleList;
-    int tupleListPointer;
+    boolean isLoaded; // whether the grouping has performed, lazy load
+    List<Tuple> tupleList; // the output list of this operator
+    int tupleListPointer; // which tuple to be returned in next getNextTuple() call
 
-
+    /**
+     * Constructor for aggregator abstract class
+     * @param child child operator
+     * @param body the atom body from child operator
+     * @param head the atom to output
+     * @throws Exception
+     */
     public AggOperator(Operator child, RelationalAtom body, RelationalAtom head) throws Exception {
         this.child = child;
         isLoaded = false;
@@ -31,19 +41,29 @@ public abstract class AggOperator<T> extends Operator {
         analysisAgg(body, head);
     }
 
+    /**
+     * Prepare the data structures for performing groping by
+     * @param body the atom body from child operator
+     * @param head the atom to output
+     * @throws Exception
+     */
     private void analysisAgg(RelationalAtom body, RelationalAtom head) throws Exception {
+        // projection from body to head
         reorderArray = Utils.genAtomPosMap(body, head);
+        // check the agg term as the last term of head
         List<Term> headTerms = head.getTerms();
-        int i;
-        for (i = 0; i < headTerms.size(); i++) {
-            if (headTerms.get(i) instanceof AggVariable) {
-                aggTermPos = i;
-                return;
-            }
+        if (headTerms.get(headTerms.size() - 1) instanceof AggVariable) {
+            aggTermPos = headTerms.size() - 1;
+        } else {
+            throw new Exception("no aggregate function found");
         }
-        if (i == headTerms.size()) throw new Exception("no aggregate function found");
     }
 
+    /**
+     *
+     * @param childTupleList
+     * @return
+     */
     private List<Tuple> groupBy(List<Tuple> childTupleList) {
         HashMap<String, T> valueMap = new HashMap<>();
         HashMap<String, Tuple> tupleMap = new HashMap<>();
