@@ -15,47 +15,47 @@ public class Interpreter {
 
     private Operator root;
     private final Query query;
+    private RelationalAtom head;
+    private List<RelationalAtom> bodyRelationalAtoms;
+    private List<ComparisonAtom> bodyComparisonAtoms;
 
     public Interpreter(String databaseDir, String inputFile) throws Exception {
         Catalog.INSTANCE.loadCatalog(databaseDir);
         query = QueryParser.parse(Paths.get(inputFile));
-        planQuery(query);
+        prepareQueryPlan();
+        planRelationQuery();
     }
 
-    private void planQuery(Query query) throws Exception {
-        RelationalAtom head = query.getHead();
+    private void prepareQueryPlan() throws Exception {
+        head = query.getHead();
         List<Atom> bodyAtoms = query.getBody();
-
-        List<RelationalAtom> bodyRelationalAtoms = bodyAtoms.stream().filter(atom -> atom instanceof RelationalAtom)
+        bodyRelationalAtoms = bodyAtoms.stream().filter(atom -> atom instanceof RelationalAtom)
                 .map(atom -> (RelationalAtom) atom).collect(Collectors.toList());
-        List<ComparisonAtom> bodyComparisonAtoms = bodyAtoms.stream().filter(atom -> atom instanceof ComparisonAtom)
+        bodyComparisonAtoms = bodyAtoms.stream().filter(atom -> atom instanceof ComparisonAtom)
                 .map(atom -> (ComparisonAtom) atom).collect(Collectors.toList());
-
         if (bodyRelationalAtoms.size() == 0) {
             throw new Exception("invalid query");
-        } else {
-            planRelationQuery(head, bodyRelationalAtoms, bodyComparisonAtoms);
         }
     }
 
-    private void planRelationQuery(RelationalAtom head, List<RelationalAtom> bodyRelationalAtoms, List<ComparisonAtom> bodyComparisonAtoms) throws Exception {
+    private void planRelationQuery() throws Exception {
         // scan & select within atom
-        List<Operator> baseOperators = buildBaseOperators(bodyRelationalAtoms, bodyComparisonAtoms);
+        List<Operator> baseOperators = buildBaseOperators();
         // join & select cross atoms
-        RelationalAtom atomBodyOutput = buildJoinTreeRoot(bodyRelationalAtoms, bodyComparisonAtoms, baseOperators);
+        RelationalAtom atomBodyOutput = buildJoinTreeRoot(baseOperators);
         // finalization with aggregation or projection
-        boolean isAggQuery = buildAggregationRoot(head, atomBodyOutput);
+        boolean isAggQuery = buildAggregationRoot(atomBodyOutput);
         // no aggregate then project
         if (!isAggQuery) {
-            buildProjectionRoot(head, atomBodyOutput);
+            buildProjectionRoot(atomBodyOutput);
         }
     }
 
-    private List<Operator> buildBaseOperators(List<RelationalAtom> bodyRelationalAtoms, List<ComparisonAtom> bodyComparisonAtoms) {
+    private List<Operator> buildBaseOperators() {
         List<Operator> baseOperators = new ArrayList<>(bodyComparisonAtoms.size());
         for (RelationalAtom rAtom : bodyRelationalAtoms) {
             boolean requireSelectionImplicit = rAtom.getTerms().stream().anyMatch(term -> term instanceof Constant);
-            List<ComparisonAtom> eliminatedComparisonAtoms = getIndividualComparisonAtoms(bodyComparisonAtoms, rAtom);
+            List<ComparisonAtom> eliminatedComparisonAtoms = getIndividualComparisonAtoms(rAtom);
             boolean requireSelectionExplicit = eliminatedComparisonAtoms.size() > 0;
             Operator baseRoot = new ScanOperator(rAtom.getName());
             if (requireSelectionExplicit || requireSelectionImplicit) {
@@ -66,12 +66,12 @@ public class Interpreter {
         return baseOperators;
     }
 
-    private RelationalAtom buildJoinTreeRoot(List<RelationalAtom> bodyRelationalAtoms, List<ComparisonAtom> bodyComparisonAtoms, List<Operator> baseOperators) {
+    private RelationalAtom buildJoinTreeRoot(List<Operator> baseOperators) {
         root = baseOperators.get(0);
         RelationalAtom atomBodyOutput = bodyRelationalAtoms.get(0);
         for (int i = 1; i < baseOperators.size(); i++) {
             RelationalAtom rightAtom = bodyRelationalAtoms.get(i);
-            List<ComparisonAtom> crossRelationComparisonAtoms = getCrossComparisonAtoms(bodyComparisonAtoms, atomBodyOutput, rightAtom);
+            List<ComparisonAtom> crossRelationComparisonAtoms = getCrossComparisonAtoms(atomBodyOutput, rightAtom);
             root = new JoinOperator(root, baseOperators.get(i), atomBodyOutput, rightAtom);
             atomBodyOutput = ((JoinOperator) root).getAtomOutput();
             if (crossRelationComparisonAtoms.size() > 0) {
@@ -81,7 +81,7 @@ public class Interpreter {
         return atomBodyOutput;
     }
 
-    private boolean buildAggregationRoot(RelationalAtom head, RelationalAtom atomBodyOutput) throws Exception {
+    private boolean buildAggregationRoot(RelationalAtom atomBodyOutput) throws Exception {
         Term lastTerm = head.getTerms().get(head.getTerms().size() - 1);
         if (lastTerm instanceof AvgVariable) {
             root = new AvgOperator(root, atomBodyOutput, head);
@@ -94,7 +94,7 @@ public class Interpreter {
         return false;
     }
 
-    private boolean buildProjectionRoot(RelationalAtom head, RelationalAtom atomBodyOutput) throws Exception {
+    private boolean buildProjectionRoot(RelationalAtom atomBodyOutput) throws Exception {
         if (!atomBodyOutput.getTermStr().equals(head.getTermStr())) {
             root = new ProjectOperator(root, atomBodyOutput, head);
             return true;
@@ -102,29 +102,25 @@ public class Interpreter {
         return false;
     }
 
-    private List<ComparisonAtom> getIndividualComparisonAtoms(List<ComparisonAtom> bodyComparisonAtoms, RelationalAtom rAtom) {
+    private List<ComparisonAtom> getIndividualComparisonAtoms(RelationalAtom rAtom) {
         List<ComparisonAtom> individualComparisonAtoms = new ArrayList<>();
         List<String> rAtomStrList = rAtom.getTermStrList();
         for (ComparisonAtom cAtom : bodyComparisonAtoms) {
             // delete all comparison atoms with non-related variables
-            Term term = cAtom.getTerm1();
-            if (term instanceof Variable) {
-                if (!rAtomStrList.contains(term.toString())) {
-                    continue;
-                }
+            Term term1 = cAtom.getTerm1();
+            if (term1 instanceof Variable) {
+                if (!rAtomStrList.contains(term1.toString())) continue;
             }
-            term = cAtom.getTerm2();
-            if (term instanceof Variable) {
-                if (!rAtomStrList.contains(term.toString())) {
-                    continue;
-                }
+            Term term2 = cAtom.getTerm2();
+            if (term2 instanceof Variable) {
+                if (!rAtomStrList.contains(term2.toString())) continue;
             }
             individualComparisonAtoms.add(cAtom);
         }
         return individualComparisonAtoms;
     }
 
-    private List<ComparisonAtom> getCrossComparisonAtoms(List<ComparisonAtom> bodyComparisonAtoms, RelationalAtom leftAtom, RelationalAtom rightAtom) {
+    private List<ComparisonAtom> getCrossComparisonAtoms(RelationalAtom leftAtom, RelationalAtom rightAtom) {
         List<ComparisonAtom> crossRelationComparisonAtoms = new ArrayList<>();
         List<String> leftAtomTermStrList = leftAtom.getTermStrList();
         List<String> rightAtomTermStrList = rightAtom.getTermStrList();
@@ -138,12 +134,10 @@ public class Interpreter {
             boolean term1InRight = rightAtomTermStrList.contains(term1Str);
             boolean term2InLeft = leftAtomTermStrList.contains(term2Str);
             boolean term2InRight = rightAtomTermStrList.contains(term2Str);
-            if (term1InLeft && !term1InRight && term2InRight && !term2InLeft) {
-                crossRelationComparisonAtoms.add(cAtom);
-            }
-            if (!term1InLeft && term1InRight && !term2InRight && term2InLeft) {
-                crossRelationComparisonAtoms.add(cAtom);
-            }
+            boolean isCrossRelationAtom = (term1InLeft && !term1InRight && term2InRight && !term2InLeft);
+            isCrossRelationAtom = isCrossRelationAtom || (!term1InLeft && term1InRight && !term2InRight && term2InLeft);
+            if (!isCrossRelationAtom) continue;
+            crossRelationComparisonAtoms.add(cAtom);
         }
         return crossRelationComparisonAtoms;
     }

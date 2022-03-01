@@ -3,11 +3,11 @@ package ed.inf.adbs.minibase.datamodel;
 public class ItemInteger extends Item {
     public final Integer i;
 
-    public ItemInteger(String s) {
+    ItemInteger(String s) {
         this.i = Integer.valueOf(s);
     }
 
-    public ItemInteger(int i) {
+    ItemInteger(int i) {
         this.i = i;
     }
 

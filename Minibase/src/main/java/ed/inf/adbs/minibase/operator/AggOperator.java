@@ -58,7 +58,7 @@ public abstract class AggOperator<T> extends Operator {
             Tuple oldTuple = tupleMap.get(entry.getKey());
             ArrayList<Item> tupleItems = new ArrayList<>(oldTuple.getItems());
             tupleItems.remove(aggTermPos);
-            tupleItems.add(aggTermPos, new ItemInteger(calcValueToInteger(entry.getValue())));
+            tupleItems.add(aggTermPos, Item.itemBuilder(calcValueToInteger(entry.getValue())));
             Tuple tuple = new Tuple(oldTuple.getTableName(), tupleItems);
             tupleList.add(tuple);
         }

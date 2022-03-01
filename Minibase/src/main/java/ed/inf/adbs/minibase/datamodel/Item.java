@@ -16,6 +16,10 @@ public abstract class Item {
         }
     }
 
+    public static Item itemBuilder(Integer integer) {
+        return new ItemInteger(integer);
+    }
+
     public static Item itemBuilder(Constant constant) {
         if (constant instanceof IntegerConstant) {
             return new ItemInteger(((IntegerConstant) constant).getValue());
