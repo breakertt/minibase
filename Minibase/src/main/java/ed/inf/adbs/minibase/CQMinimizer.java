@@ -223,11 +223,9 @@ public class CQMinimizer {
 
     /**
      * Check whether a source relational atom can transform to a dst relational atom with a homo mapping.
-     *
-     * names of two relational atoms should be consistent;
-     * for terms, variable to constant, variable to variable, constant x to constant x is allowed
-     * no constant to variable or constant x to constant y or map distinguish variable to other is allowed
-     *
+     * Rules: Names and length of two relational atoms should be consistent. For terms, variable to constant, variable
+     * to variable, constant x to constant x is allowed; no constant to variable or constant x to constant y or map
+     * distinguish variable to other is allowed
      * @param src an atom to be transformed
      * @param dst an atom for src to transform to
      * @param head head atom of the cq containing distinguish variables

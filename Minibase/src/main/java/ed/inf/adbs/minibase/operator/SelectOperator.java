@@ -18,8 +18,8 @@ public class SelectOperator extends Operator {
     private final Operator child;
     private final List<ComparisonAtom> cAtomList; // the list of comparison atoms
     private final List<Term> rAtomBody; // terms of the atom
-    private HashMap<String, Integer> variablePosMap; // a map for variable name to pos in atom fast lookup
-    private List<Integer> constantTermPosList; // the positions for constant terms for fast implicit equal check
+    private final HashMap<String, Integer> variablePosMap; // a map for variable name to pos in atom fast lookup
+    private final List<Integer> constantTermPosList; // the positions for constant terms for fast implicit equal check
 
     /**
      * Constructor for select operator
@@ -100,7 +100,7 @@ public class SelectOperator extends Operator {
     }
 
     /**
-     * A function which adopts between the result from compareTo method for Comparable objects to the ComparisonOperator
+     * Adopts between the result from compareTo method for Comparable objects and the ComparisonOperator enum
      * enums
      * @param comparedToRes the result from compareTo method between two Comparable objects
      * @param op the ComparisonOperator operator enums

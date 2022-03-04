@@ -18,7 +18,7 @@ public abstract class Operator {
      * @param ps the print stream for tuples written to
      */
     public void dump(PrintStream ps) {
-        Tuple tuple = null;
+        Tuple tuple;
         while(true) {
             tuple = getNextTuple();
             if (tuple != null) {
