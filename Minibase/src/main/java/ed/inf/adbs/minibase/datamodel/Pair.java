@@ -1,5 +1,8 @@
 package ed.inf.adbs.minibase.datamodel;
 
+/**
+ * A Pair class which stores two int values
+ */
 public class Pair {
     public int a, b;
 

@@ -1,5 +1,8 @@
 package ed.inf.adbs.minibase.datamodel;
 
+/**
+ * An Item object which stores string value
+ */
 public class ItemString extends Item {
     public final String s;
 

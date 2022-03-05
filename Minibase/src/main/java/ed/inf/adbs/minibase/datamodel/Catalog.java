@@ -4,53 +4,76 @@ import java.io.*;
 import java.util.HashMap;
 import java.util.Objects;
 
-// Singleton
+// A singleton object (implemented with enum) which stores metadata of tables in the database
 public enum Catalog {
     INSTANCE;
 
+    // a hashmap which stores the name of table as key, and the table class object as value
     private final HashMap<String, Table> catalog = new HashMap<>();
 
+    /**
+     * Load metadata of tables in the database
+     * @param databaseDir the path of database
+     * @throws Exception
+     */
     public void loadCatalog(String databaseDir) throws Exception {
         File dbDirFile = new File(databaseDir);
         File schemaFile = new File(dbDirFile, "schema.txt");
         File tableSubDirFile = new File(dbDirFile, "files");
-        BufferedReader schemaBufReader;
-
+        // check whether schema file exists
         if (!schemaFile.exists() || !schemaFile.isFile()) {
             throw new Exception("schema not exist or not a file");
         }
-
-        schemaBufReader = new BufferedReader(new FileReader(schemaFile));
+        BufferedReader schemaBufReader = new BufferedReader(new FileReader(schemaFile));
         String tableSchema;
+        // read schema file line by line, and load table metadata correspondingly
         while ((tableSchema = schemaBufReader.readLine()) != null) {
             loadTable(tableSchema, tableSubDirFile);
         }
     }
 
+    /**
+     * Load the metadata of one table
+     * @param tableSchema the schema of this table from schema file
+     * @param tableSubDirFile the directory of this table
+     * @throws Exception
+     */
     private void loadTable(String tableSchema, File tableSubDirFile) throws Exception {
         String[] tableSchemaList = tableSchema.split(" ");
         File tableFile = new File(tableSubDirFile, tableSchemaList[0] + ".csv");
-
+        // check whether table file exists
         if (!tableFile.exists() || !tableFile.isFile()) {
             throw new Exception("table not exist or not a file");
         }
-
+        // check duplicate tables in the schema file
         if (!addTable(tableSchemaList[0], tableFile.getPath(), tableSchema)) {
             throw new Exception("duplicate table name with different schema");
         }
     }
 
+    /**
+     * Add the table into catalog hashmap
+     * @param name name of table
+     * @param path path of table
+     * @param schema scheme of table
+     * @return whether a table is added into catalog successfully
+     */
     private boolean addTable(String name, String path, String schema) {
         Table newTable = new Table(name, path, schema);
         if (catalog.containsKey(name)) {
             Table oldTable = catalog.get(name);
             return oldTable.equals(newTable);
         } else {
-                catalog.put(name, newTable);
+            catalog.put(name, newTable);
             return true;
         }
     }
 
+    /**
+     * Get the path of one table on its name
+     * @param name the table name
+     * @return the path of the table
+     */
     public String queryTablePath(String name) {
         if (catalog.containsKey(name)) {
             return catalog.get(name).getPath();
@@ -59,6 +82,11 @@ public enum Catalog {
         }
     }
 
+    /**
+     * Get the schema of one table on its name
+     * @param name the table name
+     * @return the schema of the table
+     */
     public String queryTableSchema(String name) {
         if (catalog.containsKey(name)) {
             return catalog.get(name).getSchema();
@@ -67,6 +95,11 @@ public enum Catalog {
         }
     }
 
+    /**
+     * Get the schema of one table on its name, but in a string list format
+     * @param name the table name
+     * @return the schema of the table, in a string list format
+     */
     public String[] queryTableSchemaStrList(String name) {
         if (catalog.containsKey(name)) {
             return catalog.get(name).getSchemaStrList();
@@ -75,7 +108,11 @@ public enum Catalog {
         }
     }
 
+    /**
+     * A inner static class which stores metadata of one table.
+     */
     private static class Table {
+
         private final String name;
         private final String path;
         private final String schema;

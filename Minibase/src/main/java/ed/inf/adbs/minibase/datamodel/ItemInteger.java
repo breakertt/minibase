@@ -1,5 +1,8 @@
 package ed.inf.adbs.minibase.datamodel;
 
+/**
+ * An Item object which stores integer value
+ */
 public class ItemInteger extends Item {
     public final Integer i;
 
