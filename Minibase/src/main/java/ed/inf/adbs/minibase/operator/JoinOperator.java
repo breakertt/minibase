@@ -25,6 +25,7 @@ public class JoinOperator extends Operator {
     private final List<Pair> equalPairList;
 
     private Tuple tuple1; // persist tuple1 for outer loop of nested join
+    private boolean isTuple1InitLoaded; // whether the first tuple in left child operator is loaded
 
     /**
      * Constructor for join operator
@@ -36,6 +37,8 @@ public class JoinOperator extends Operator {
     public JoinOperator(Operator child1, Operator child2, RelationalAtom atom1, RelationalAtom atom2) {
         this.child1 = child1;
         this.child2 = child2;
+        this.tuple1 = null;
+        this.isTuple1InitLoaded = false;
         this.equalPairList = new ArrayList<>();
         analysisJoin(atom1, atom2);
     }
@@ -102,33 +105,24 @@ public class JoinOperator extends Operator {
 
     @Override
     public Tuple getNextTuple() {
-        while (true) {
-            // if tuple1 is not loaded, load; to be noticed, do not get new tuple1 for every getNextTuple() call
-            if (tuple1 == null) {
-                tuple1 = child1.getNextTuple();
-                // if load failed then no need to continue
-                if (tuple1 == null) {
-                    return null;
-                }
-            }
-            Tuple tuple2 = child2.getNextTuple();
-            // if tuple2 load is failed, this can be two possibilities - 1. child2 operators is empty, 2. child2
-            // operator needs to be reset
-            if (tuple2 == null) {
-                child2.reset(); // reset the child2 operators
-                tuple2 = child2.getNextTuple(); // try to get the first tuple after reset
-                tuple1 = child1.getNextTuple(); // as inner loop finishes, should all reset the outer loop
-                // if tuple2 is still null, indicating child2 operator is empty, return; if tuple1 is null, indicating
-                // child1 operator is also finished
-                if (tuple2 == null || tuple1 == null) {
-                    return null;
-                }
-            }
-            // return only implicit equal checks are passed
-            if (checkEqualOnVariables(tuple1, tuple2, equalPairList)) {
-                return new Tuple(tuple1, tuple2, atomOutput.getName(), reorderArray);
-            }
+        // open left child operator, only run once
+        if (!isTuple1InitLoaded) {
+            tuple1 = child1.getNextTuple();
+            isTuple1InitLoaded = true;
         }
+        while (tuple1 != null) {
+            Tuple tuple2;
+            while ((tuple2 = child2.getNextTuple()) != null) {
+                // return only implicit equal checks are passed
+                if (checkEqualOnVariables(tuple1, tuple2, equalPairList)) {
+                    return new Tuple(tuple1, tuple2, atomOutput.getName(), reorderArray);
+                }
+            }
+            // if tuples in right child run out, reset inner loop, advance outer loop
+            child2.reset();
+            tuple1 = child1.getNextTuple();
+        }
+        return null;
     }
 
     @Override

@@ -38,8 +38,8 @@ public abstract class AggOperator<T> extends Operator {
      */
     public AggOperator(Operator child, RelationalAtom body, RelationalAtom head) throws Exception {
         this.child = child;
-        isLoaded = false;
-        tupleListPointer = 0;
+        this.isLoaded = false;
+        this.tupleListPointer = 0;
         analysisAgg(body, head);
     }
 
