@@ -116,7 +116,7 @@ public class CQMinimizer {
                 }
             }
         }
-        System.out.println("Final Body: " + body);
+//        System.out.println("Final Body: " + body);
         return new Query(head, body);
     }
 
