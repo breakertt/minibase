@@ -1,1 +1,1 @@
-R(a,b,c,d,e,f,g,h,i,j,k,l,m,n) :- P(a,b,c,d), D(e,f,g), A(a,e,h), Q(i,j,k,l,m,n), n = a 
+Q(a,b,c,d) :- P(a,b,c,d), D(e,f,g), A(a,e,1), e >= 2, g >= 7, f = 'Surgery'

@@ -34,7 +34,7 @@ Q(a,b,c,d,e,f,g) :- P(a,b,c,d), D(e,f,g), A(a,e,1), e >= 2
 Q(a,b,c,d,e,f,g) :- P(a,b,c,d), D(e,f,g), A(a,e,1), g >= 7
 Q(a,b,c,d,e,f,g) :- P(a,b,c,d), D(e,f,g), A(a,e,1), e >= 2, g >= 7, f = 'Surgery'
 Q(g,f,SUM(e)) :- P(a,b,c,d), D(e,f,g), A(a,e,1), e >= 2, g >= 7, f = 'Surgery'
-Q(j,f,AVG(e)) :- P(a,b,c,d), D(e,f,g), A(a,e,1), e >= 2, g >= 7, f = 'Surgery'
+Q(g,f,AVG(e)) :- P(a,b,c,d), D(e,f,g), A(a,e,1), e >= 2, g >= 7, f = 'Surgery'
 Q(g,f,SUM(e)) :- P(a,b,c,d), D(e,f,g), A(a,e,1), e >= 2, g >= 7, f = 'Surgery'
 Q(a,b,c,d) :- P(a,b,c,d), D(e,f,g), A(a,e,1), e >= 2, g >= 7, f = 'Surgery'
 Q(a,b,c,d,e,g) :- P(a,b,c,d), D(e,'Surgery',g), A(a,e,1), e >= 2, g >= 7
@@ -43,7 +43,7 @@ R(a,b,c,d,e,f,g,h,i,j,k,l,m,n) :- P(a,b,c,d), D(e,f,g), A(a,e,h), Q(i,j,k,l,m,n)
 R(a,b,c,d,e,f,g,h,i,j,k,l,m,n) :- P(a,b,c,d), D(e,f,g), A(a,e,h), Q(i,j,k,l,m,n), n = a 
 R(a,b,c,d,e,f,g,h,i,j,k,l,m,n) :- P(a,b,c,d), D(e,f,g), A(a,e,h), Q(i,j,k,l,m,n), a = n
 R(a,b,c) :- P(a,b,c,d), D(e,f,g), A(a,e,h), Q(i,j,k,l,m,n), a = n
-R(a,b,c,d,e,f,g,h,i,j,k,l,m,n) :- P(a,b,c,d), D(e,f,g), A(a,e,j), Q(k,l,n,m,o,a)
+R(a,b,c,d,e,f,g,j,k,l,m,n,o,a) :- P(a,b,c,d), D(e,f,g), A(a,e,j), Q(k,l,n,m,o,a)
 R(a,b,k,l,m,n) :- P(a,b,c,d), D(e,f,g), A(a,e,j), Q(k,l,n,m,o,a)"""
 
 start_num = 1

@@ -3,7 +3,7 @@ import traceback
 import shutil
 
 minibase_ref1 = r"Minibase/target/minibase-1.0.0-jar-with-dependencies.jar"
-minibase_ref2 = r"minibase-1.0.2-jar-with-dependencies.jar"
+minibase_ref2 = r"minibase-lyd.jar"
 test_dir = r"Minibase/data/evaluation_extra/extra_02"
 
 db_dir = os.path.join(test_dir, "db")
