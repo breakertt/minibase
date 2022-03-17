@@ -93,11 +93,11 @@ public class JoinOperator extends Operator {
      * @param equalPairList the position pairs of identical variables in child1 atom and child2 atom
      * @return whether the two tuples pass all implicit equalities
      */
-    private boolean checkEqualOnVariables(Tuple tuple1, Tuple tuple2, List<Pair> equalPairList) {
+    private <T extends Comparable<T>> boolean checkEqualOnVariables(Tuple tuple1, Tuple tuple2, List<Pair> equalPairList) {
         boolean isEqualOnVariables = true;
         for (Pair pair: equalPairList) {
-            Comparable item1Val = tuple1.getItems().get(pair.a).getValue();
-            Comparable item2Val = tuple2.getItems().get(pair.b).getValue();
+            T item1Val = tuple1.getItems().get(pair.a).getValue();
+            T item2Val = tuple2.getItems().get(pair.b).getValue();
             isEqualOnVariables = isEqualOnVariables && (item1Val.compareTo(item2Val) == 0);
         }
         return isEqualOnVariables;

@@ -1,2 +1,2 @@
-Manufacturers int string
-Products int string int int
+M int string
+P int string int int

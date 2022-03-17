@@ -57,10 +57,10 @@ public class SelectOperator extends Operator {
      * @param tuple the tuple to check
      * @return whether the tuple meets the explicit conditions
      */
-    private boolean explicitRulesCheck(Tuple tuple) {
+    private <T extends Comparable<T>> boolean explicitRulesCheck(Tuple tuple) {
         for (ComparisonAtom cAtom: cAtomList) {
-            Comparable comparable1 = extractOrMatchValueForTerm(cAtom.getTerm1(), tuple);
-            Comparable comparable2 = extractOrMatchValueForTerm(cAtom.getTerm2(), tuple);
+            T comparable1 = extractOrMatchValueForTerm(cAtom.getTerm1(), tuple);
+            T comparable2 = extractOrMatchValueForTerm(cAtom.getTerm2(), tuple);
             if (!compareCheck(comparable1.compareTo(comparable2), cAtom.getOp())) return false;
         }
         return true;
@@ -74,7 +74,7 @@ public class SelectOperator extends Operator {
      * @param tuple the tuple for variable term to get concrete value
      * @return a Comparable obj with concrete value
      */
-    private Comparable extractOrMatchValueForTerm(Term term, Tuple tuple) {
+    private <T extends Comparable<T>> T extractOrMatchValueForTerm(Term term, Tuple tuple) {
         if (term instanceof Variable) {
             Integer variablePos = variablePosMap.getOrDefault(((Variable) term).getName(), -1);
             return tuple.getItems().get(variablePos).getValue();
@@ -88,12 +88,12 @@ public class SelectOperator extends Operator {
      * @param tuple the tuple to check
      * @return whether the tuple meets the implicit conditions
      */
-    private boolean implicitRulesCheck(Tuple tuple) {
+    private <T extends Comparable<T>> boolean implicitRulesCheck(Tuple tuple) {
         for (Integer i: constantTermPosList) {
             // get the constant value in the atom body
-            Comparable comparable1 = Item.itemBuilder((Constant) rAtomBody.get(i)).getValue();
+            T comparable1 = Item.itemBuilder((Constant) rAtomBody.get(i)).getValue();
             // get the value in the tuple
-            Comparable comparable2 = tuple.getItems().get(i).getValue();
+            T comparable2 = tuple.getItems().get(i).getValue();
             if (!compareCheck(comparable1.compareTo(comparable2), ComparisonOperator.EQ)) return false;
         }
         return true;

@@ -1,1 +1,1 @@
-Q(e, AVG(c)) :- Products(a, b, c, d), Manufacturers(d, e)
+Q(e, AVG(c)) :- P(a, b, c, d), M(d, e)

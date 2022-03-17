@@ -14,8 +14,9 @@ public class ItemString extends Item {
         }
     }
 
-    public String getValue() {
-        return s;
+    @SuppressWarnings("unchecked")
+    public <T extends Comparable<T>> T getValue() {
+        return (T) s;
     }
 
     @Override

@@ -1,1 +1,1 @@
-Q(b, c, e) :- Products(a, b, c, d), Manufacturers(d, e)
+Q(b, c, e) :- P(a, b, c, d), M(d, e)

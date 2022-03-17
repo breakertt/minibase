@@ -1,1 +1,1 @@
-Q(d, AVG(c)) :- Products(a, b, c, d)
+Q(d, AVG(c)) :- P(a, b, c, d)

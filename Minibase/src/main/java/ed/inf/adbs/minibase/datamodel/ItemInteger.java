@@ -14,8 +14,9 @@ public class ItemInteger extends Item {
         this.i = i;
     }
 
-    public Integer getValue() {
-        return i;
+    @SuppressWarnings("unchecked")
+    public <T extends Comparable<T>> T getValue() {
+        return (T) i;
     }
 
     @Override

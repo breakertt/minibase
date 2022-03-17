@@ -53,5 +53,5 @@ public abstract class Item {
      * Return a Comparable type value for item comparisons
      * @return a Comparable value
      */
-    public abstract Comparable getValue();
+    public abstract <T extends Comparable<T>> T getValue();
 }

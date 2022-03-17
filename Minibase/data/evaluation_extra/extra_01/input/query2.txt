@@ -1,1 +1,1 @@
-Q(AVG(c)) :- Products(a,b,c,d)
+Q(AVG(c)) :- P(a,b,c,d)

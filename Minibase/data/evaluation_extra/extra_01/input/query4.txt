@@ -1,1 +1,1 @@
-Q(b,c) :- Products(a,b,c,d), c >= 180
+Q(b,c) :- P(a,b,c,d), c >= 180
