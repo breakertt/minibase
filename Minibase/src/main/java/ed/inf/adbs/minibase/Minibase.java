@@ -1,13 +1,6 @@
 package ed.inf.adbs.minibase;
 
-import ed.inf.adbs.minibase.base.Atom;
-import ed.inf.adbs.minibase.base.Query;
-import ed.inf.adbs.minibase.base.RelationalAtom;
-import ed.inf.adbs.minibase.parser.QueryParser;
-
 import java.io.*;
-import java.nio.file.Paths;
-import java.util.List;
 
 /**
  * In-memory database system

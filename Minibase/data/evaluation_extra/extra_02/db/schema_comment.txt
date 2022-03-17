@@ -1,0 +1,7 @@
+P Physican    EmployeeID    Name  Position  SSN
+D Department  DeaprtmentID  Name  Head(P.EmployeeID)      
+A Affiliated_With Physician(P.EmployeeID) Department(D.DeaprtmentID) PrimaryAffiliation 
+Q Patient     SSN Name Address Phone InsuranceID PCP(P.EmployeeID)
+N Nurse       EmployeeID    Name Position Registered SSN
+B Appointment AppointmentID Patient(Q.SSN) PrepNurse(N.EmployeeID) Physician(P.EmployeeID) Start End ExaminationRoom 
+R Prescribes  Physician(P.EmployeeID) Patient(Q.SSN) Medication Date Appointment(B.AppointmentID) Dose

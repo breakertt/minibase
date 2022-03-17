@@ -1,1 +1,1 @@
-Q(b, c, e) :- P(a, b, c, d), M(d, e)
+Q(AVG(c)) :- P(a,b,c,d), d = 2
