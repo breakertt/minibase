@@ -11,22 +11,36 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * An Interpreter class for 1. prepare the database 2. build the query three 3. expose a interface for query evaluation
+ * results (i.e. dump)
+ */
 public class Interpreter {
 
-    private Operator root;
-    private final Query query;
-    private RelationalAtom head;
-    private List<RelationalAtom> bodyRelationalAtoms;
-    private List<ComparisonAtom> bodyComparisonAtoms;
+    private Operator root; // the root of query tree
+    private final Query query; // the query to evaluate
 
+    // Unpacked query
+    private RelationalAtom head; // the head of query
+    private List<RelationalAtom> bodyRelationalAtoms; // the relational atoms in query body
+    private List<ComparisonAtom> bodyComparisonAtoms; // the comparison atoms in query body
+
+    /**
+     * Constructor for Interpreter
+     * @param databaseDir the path of database
+     * @param inputFile the path of query
+     */
     public Interpreter(String databaseDir, String inputFile) throws Exception {
         Catalog.INSTANCE.loadCatalog(databaseDir);
         query = QueryParser.parse(Paths.get(inputFile));
-        prepareQueryPlan();
+        unpackQueryPlan();
         planRelationQuery();
     }
 
-    private void prepareQueryPlan() throws Exception {
+    /**
+     * Unpack the query to three parts
+     */
+    private void unpackQueryPlan() throws Exception {
         head = query.getHead();
         List<Atom> bodyAtoms = query.getBody();
         bodyRelationalAtoms = bodyAtoms.stream().filter(atom -> atom instanceof RelationalAtom)
@@ -38,6 +52,13 @@ public class Interpreter {
         }
     }
 
+    /**
+     * Build a query tree with a three-pass:
+     * 1. build base operator trees which only includes ScanOperator (compulsory) and SelectOperator (single relation
+     * wide, optional);
+     * 2. based on the base operators, build a left-deep join three;
+     * 3. compare the atom after join with head, add a ProjectOperator or AggOperator if in need.
+     */
     private void planRelationQuery() throws Exception {
         // scan & select within atom
         List<Operator> baseOperators = buildBaseOperators();
@@ -51,21 +72,40 @@ public class Interpreter {
         }
     }
 
+    /**
+     * Build a list of base operators which only consider single-atom-wide selection and scan, and no join
+     * 1. Build a ScanOperator for every relational atom.
+     * 2. Check whether this atom needs single atom wide select (push down selection), if so build a SelectOperator for
+     * this atom with selection conditions (comparison atoms)
+     * 2.1 Check whether this atom needs implicit selection (one term in the atom is a constant)
+     * 2.2 Check whether this atom needs explicit selection (a comparison atom does not contain a variable this atom
+     * does not have)
+     * @return a List of base operators (no join)
+     */
     private List<Operator> buildBaseOperators() {
         List<Operator> baseOperators = new ArrayList<>(bodyComparisonAtoms.size());
         for (RelationalAtom rAtom : bodyRelationalAtoms) {
             boolean requireSelectionImplicit = rAtom.getTerms().stream().anyMatch(term -> term instanceof Constant);
-            List<ComparisonAtom> eliminatedComparisonAtoms = getIndividualComparisonAtoms(rAtom);
-            boolean requireSelectionExplicit = eliminatedComparisonAtoms.size() > 0;
+            List<ComparisonAtom> matchedComparisonAtoms = getIndividualComparisonAtoms(rAtom);
+            boolean requireSelectionExplicit = matchedComparisonAtoms.size() > 0;
             Operator baseRoot = new ScanOperator(rAtom.getName());
             if (requireSelectionExplicit || requireSelectionImplicit) {
-                baseRoot = new SelectOperator(baseRoot, rAtom, eliminatedComparisonAtoms);
+                baseRoot = new SelectOperator(baseRoot, rAtom, matchedComparisonAtoms);
             }
             baseOperators.add(baseRoot);
         }
         return baseOperators;
     }
 
+    /**
+     * Build a left-deep join tree on base operators
+     * 1. Build a Join Operator on two base operators, then take the output as updated left operator. The join operator
+     * can resolve implicit equality selections, but not explicit ones in Comparison Atoms.
+     * 2. Iterate over the ComparisonAtom list, add a SelectOperator on the top of JoinOperator if there is cross
+     * comparison required.
+     * @param baseOperators a List of base operators (no join)
+     * @return the atom of join-tree root
+     */
     private RelationalAtom buildJoinTreeRoot(List<Operator> baseOperators) {
         root = baseOperators.get(0);
         RelationalAtom atomBodyOutput = bodyRelationalAtoms.get(0);
@@ -102,6 +142,11 @@ public class Interpreter {
         return false;
     }
 
+    /**
+     * Filter out the comparison atoms can be performed only on one particular atom
+     * @param rAtom a relational atom
+     * @return a list of comparison atoms do not contain a variable the input atom does not have
+     */
     private List<ComparisonAtom> getIndividualComparisonAtoms(RelationalAtom rAtom) {
         List<ComparisonAtom> individualComparisonAtoms = new ArrayList<>();
         List<String> rAtomStrList = rAtom.getTermStrList();
@@ -120,6 +165,17 @@ public class Interpreter {
         return individualComparisonAtoms;
     }
 
+    /**
+     * Filter out all comparison atoms can only be performed in this join
+     * Rules:
+     * 1. the comparison atom is a variable - variable comparison
+     * 2. the two variables are not in one atom before join
+     * 3. one variable in comparison occurred in one relation, and another one occurred in another
+     *
+     * @param leftAtom the relation at left side on the query tree
+     * @param rightAtom the relation at right side on the query tree
+     * @return a list of comparison atoms which can only applied on join
+     */
     private List<ComparisonAtom> getCrossComparisonAtoms(RelationalAtom leftAtom, RelationalAtom rightAtom) {
         List<ComparisonAtom> crossRelationComparisonAtoms = new ArrayList<>();
         List<String> leftAtomTermStrList = leftAtom.getTermStrList();
